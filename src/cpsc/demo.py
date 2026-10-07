@@ -11,33 +11,32 @@
 # SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 # *******************************************************************************
 
-"""Small command-line demonstration of compile-time rejection vs sector evolution."""
+"""Command-line demonstration of both symmetry modes."""
 
 from __future__ import annotations
 
-import numpy as np
-
-from cpsc.analyzer import CompilationRejected, SymmetryAnalyzer, rx_pair, x, zz
-from cpsc.channel import evolve_in_sector, leakage
-from cpsc.hamiltonian import parity_of, x4_identity_shift
+from cpsc.analyzer import CompilationRejected, ising_ring, transverse_field, x, z
+from cpsc.compiler import compile_scattering
+from cpsc.hamiltonian import x4_identity_shift
 
 
 def main() -> None:
     n = 4
-    analyzer = SymmetryAnalyzer(n, conserve_magnetization=True)
-    legal = [zz(0, 1), zz(1, 2), zz(2, 3), zz(3, 0)]
-    print("admitted ZZ ring:", [g.name for g in analyzer.admit(legal)])
+    ising = compile_scattering(n, 0b0011, ising_ring(n), time=0.4, steps=8, lam=0.0)
+    print("ising mode", ising["mode"], "z-leakage", f"{ising['z_parity_leakage']:.3e}")
+    print("certificate", ising["certificate"].digest[:16])
     try:
-        analyzer.admit(legal + [x(2)])
+        compile_scattering(n, 0b0011, ising_ring(n) + [x(2)], time=0.2, lam=0.0)
     except CompilationRejected as exc:
-        print("rejected adversarial X:", exc)
-
-    # lambda = 0: magnetization is a symmetry. Two-wall bitstring 0b0011.
-    psi = evolve_in_sector(n, 0b0011, time=0.4, j=1.0, lam=0.0, conserve_magnetization=True)
-    print(f"parity leakage at lambda=0: {leakage(psi, n, parity_of(0b0011, n)):.3e}")
-    print(f"norm: {np.vdot(psi, psi).real:.6f}")
-    print(f"dropped X^4 shift (g=1): {x4_identity_shift(n, 1.0):.4f} * I")
-    print("parity-even pair admitted:", analyzer.admit([rx_pair(0, 1)])[0].name)
+        print("ising rejected", exc)
+    gates = ising_ring(n) + transverse_field(n)
+    flip = compile_scattering(n, 0b0001, gates, time=0.4, steps=8, lam=0.5)
+    print("spin-flip x-leakage", f"{flip['x_parity_leakage']:.3e}")
+    try:
+        compile_scattering(n, 0b0001, gates + [z(1)], time=0.2, lam=0.5)
+    except CompilationRejected as exc:
+        print("spin-flip rejected", exc)
+    print("dropped X^4 shift", x4_identity_shift(n, 1.0))
 
 
 if __name__ == "__main__":

@@ -7,15 +7,21 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 # Open problems
 
-Marked `POSSIBLY_NOVEL` in the draft. The honest status is: architectural sketch, partially prototyped, not prior-art cleared, not formally verified.
+Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype with a Boolean certificate. Operator commutation is not formally verified, and prior art is not cleared.
+
+## Discharged in the prototype
+
+1. Boolean admission. `lean/CPSC/Certificate.lean` reduces the 4-site ring and both adversarial extensions by `rfl`.
+2. Digest binding. `cpsc.certificate` hashes the schedule. Editing a gate makes `Certificate.matches` false.
+3. Mode switch. λ = 0 rejects a single X. λ ≠ 0 rejects a lone Z. Translation orbits must be closed.
 
 ## Obligations not discharged
 
-1. Commutation proof for a concrete gate list in Lean. The file states the theorem and stops at `sorry`.
-2. Leakage bound under an explicit hardware noise model. Ideal leakage is zero by the Python projection; device leakage is unmodeled.
-3. Completeness for momentum blocks, not just parity. Translation projection of a non-invariant factor is implemented as a classical average on operators we already trust, not as a general synthesizer.
-4. A non-trivial $\phi^4$ encoding. $X^4 = I$ on qubits. The next model should be a truncated oscillator per site, $\phi_i \in \{-S,\ldots,S\}$, with $\pi_i^2 + (\nabla\phi)^2 + m^2\phi^2 + g\phi^4$.
-5. Certificate binding. Nothing yet hashes the gate list into the Lean statement, so a manual edit cannot "break the proof."
+1. Operator commutation. The Boolean predicate is not yet proved equal to `[U, Π] = 0` on `(ℂ²)⊗N`.
+2. Leakage under hardware noise. Ideal leakage on N = 4 is zero; device leakage is unmodeled.
+3. Momentum as an eigenspace, rather than orbit closure of the gate support.
+4. A non-trivial φ⁴ encoding. `X^4 = I` on qubits. The next model is a truncated oscillator per site.
+5. A Lean binary in CI. The emitted theorem is generated; `lake build` has not been run here.
 
 ## Collisions
 
@@ -26,4 +32,4 @@ Marked `POSSIBLY_NOVEL` in the draft. The honest status is: architectural sketch
 
 ## What would make the novelty claim true
 
-A released artifact where (i) the channel projector is derived from a stated lattice QFT, (ii) every hardware rewrite is rejected or proved inside the commutant, and (iii) a Lean checker fails closed on an edited circuit. This repository is the place that artifact would land. It is not that artifact yet.
+A released artifact where (i) the channel projector is derived from a stated lattice QFT, (ii) every hardware rewrite is rejected or proved inside the commutant, and (iii) a Lean checker fails closed on an edited circuit. The prototype now rejects illegal gates and binds a digest. It still does not fail a Lean checker on an edited operator identity. That gap is obligation 1.

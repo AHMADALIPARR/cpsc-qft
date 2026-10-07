@@ -47,8 +47,8 @@ def evolve_in_sector(
 ) -> np.ndarray:
     """Return the full-space statevector of the sector-restricted evolution.
 
-    Completeness holds for parity at any lambda, and for magnetization only
-    when lambda == 0 (or when the caller forces the extra constraint).
+    Z-parity completeness holds only at lambda = 0. For lambda != 0 the
+    symmetry is prod X. Magnetization pruning is refused unless lambda == 0.
     """
     if not 0 <= initial_basis < (1 << n):
         raise ValueError("initial basis out of range")
@@ -85,3 +85,88 @@ def leakage(state: np.ndarray, n: int, parity: int) -> float:
         if parity_of(b, n) != parity:
             wrong += float(np.abs(amp) ** 2)
     return wrong
+
+
+def apply_prod_x(state: np.ndarray, n: int) -> np.ndarray:
+    out = np.zeros_like(state)
+    mask = (1 << n) - 1
+    for basis, amp in enumerate(state):
+        out[basis ^ mask] += amp
+    return out
+
+
+def even_cat(n: int, basis: int) -> np.ndarray:
+    """Normalized +1 eigenstate of prod X built from a computational seed."""
+    state = np.zeros(1 << n, dtype=np.complex128)
+    state[basis] = 1.0 / np.sqrt(2.0)
+    state[basis ^ ((1 << n) - 1)] += 1.0 / np.sqrt(2.0)
+    return state
+
+
+def z_parity_leakage(state: np.ndarray, n: int, parity: int) -> float:
+    return leakage(state, n, parity)
+
+
+def x_parity_leakage(state: np.ndarray, n: int, seed_basis: int) -> float:
+    """Mass outside the even prod-X sector."""
+    del seed_basis
+    flipped = apply_prod_x(state, n)
+    projected = 0.5 * (state + flipped)
+    return float(max(0.0, 1.0 - np.vdot(projected, projected).real))
+
+
+def _apply_rx(state: np.ndarray, n: int, qubit: int, angle: float) -> np.ndarray:
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    out = np.zeros_like(state)
+    bit = 1 << qubit
+    for basis, amp in enumerate(state):
+        if amp == 0:
+            continue
+        out[basis] += cos * amp
+        out[basis ^ bit] += -1j * sin * amp
+    return out
+
+
+def _apply_rzz(state: np.ndarray, n: int, q1: int, q2: int, angle: float) -> np.ndarray:
+    out = state.copy()
+    for basis in range(state.shape[0]):
+        z1 = 1.0 if ((basis >> q1) & 1) == 0 else -1.0
+        z2 = 1.0 if ((basis >> q2) & 1) == 0 else -1.0
+        out[basis] *= np.exp(1j * angle * z1 * z2)
+    return out
+
+
+def evolve_trotter(
+    n: int,
+    initial_basis: int,
+    gates,
+    *,
+    time: float,
+    steps: int,
+    j: float,
+    lam: float,
+    conserve_magnetization: bool,
+) -> np.ndarray:
+    """First-order Trotter product of the admitted local terms."""
+    if conserve_magnetization:
+        state = np.zeros(1 << n, dtype=np.complex128)
+        state[initial_basis] = 1.0
+    else:
+        state = even_cat(n, initial_basis)
+    dt = time / steps
+    for _ in range(steps):
+        for gate in gates:
+            if gate.kind == "magnetization":
+                a, b = gate.qubits
+                state = _apply_rzz(state, n, a, b, j * dt)
+            elif gate.kind in {"illegal", "transverse"}:
+                state = _apply_rx(state, n, gate.qubits[0], lam * dt)
+            elif gate.kind == "parity_even":
+                for q in gate.qubits:
+                    state = _apply_rx(state, n, q, lam * dt)
+            elif gate.kind == "phase":
+                continue
+            else:
+                raise ValueError(f"no evolution rule for {gate.kind}")
+    return state

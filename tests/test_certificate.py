@@ -11,21 +11,17 @@
 # SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 # *******************************************************************************
 
-"""Conservation-Preserving Scattering Compiler, research prototype."""
-
-from cpsc.analyzer import Gate, Rejection, SymmetryAnalyzer, SymmetryMode
-from cpsc.certificate import Certificate
-from cpsc.channel import evolve_in_sector, sector_basis
+from cpsc.analyzer import ising_ring, x
 from cpsc.compiler import compile_scattering
 
-__all__ = [
-    "Certificate",
-    "Gate",
-    "Rejection",
-    "SymmetryAnalyzer",
-    "SymmetryMode",
-    "compile_scattering",
-    "evolve_in_sector",
-    "sector_basis",
-]
-__version__ = "0.2.0"
+
+def test_manual_edit_breaks_certificate():
+    gates = ising_ring(4)
+    compiled = compile_scattering(4, 0b0011, gates, time=0.3, steps=4, lam=0.0)
+    cert = compiled["certificate"]
+    assert cert.matches(gates)
+    edited = gates[:-1] + [x(0)]
+    assert not cert.matches(edited)
+    assert "emittedHash" in cert.lean
+    assert cert.digest in cert.lean
+    assert "native_decide" in cert.lean or "rfl" in cert.lean

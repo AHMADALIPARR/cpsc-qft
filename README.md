@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** research scaffold. The symmetry analyzer and adversarial harness run. The Lean certificate and the hardware mapping are open obligations, not discharged proofs.
+**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Boolean Lean skeleton run. Operator commutation on the qubit space is still open. The paper is [paper/PAPER.md](paper/PAPER.md).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -43,13 +43,13 @@ The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the i
 
 ```
 docs/SPECIFICATION.md     mathematical construction and PCSS workflow
-docs/CHANNEL_PRUNING.md   1+1 → 1+2 channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     proof obligations and known collisions
-lean/CPSC/                Lean 4 certificate skeleton (sorry on purpose)
-qsharp/                   symmetry-projected evolution stub
-src/cpsc/                 executable symmetry analyzer
-tests/                    adversarial leakage, charge sector, energy identity
-paper/ABSTRACT.md         citable abstract with an explicit non-claim
+docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
+docs/OPEN_PROBLEMS.md     discharged skeleton vs open operator proof
+lean/CPSC/                Boolean certificate, plus an emitted digest
+qsharp/                   Ising and spin-flip Trotter operations
+src/cpsc/                 analyzer, compiler, certificate binder
+tests/                    adversarial rejection, orbit check, digest binding
+paper/PAPER.md            working paper
 ```
 
 ## Run the analyzer

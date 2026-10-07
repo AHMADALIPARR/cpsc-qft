@@ -16,33 +16,64 @@ namespace ConservationPreservingScattering {
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Arrays;
     open Microsoft.Quantum.Measurement;
+    open Microsoft.Quantum.Convert;
 
-    /// Parity-even Trotter factor for the ZZ ring.
-    /// A single X is intentionally absent: it anticommutes with prod Z.
-    operation ApplyZZRing(register : Qubit[], theta : Double) : Unit is Adj + Ctl {
+    /// Ising bond. ZZ commutes with both ∏ Z and ∏ X.
+    operation ApplyZZRing(register : Qubit[], angle : Double) : Unit is Adj + Ctl {
         let n = Length(register);
         for i in 0 .. n - 1 {
-            ExpFrac([PauliZ, PauliZ], theta, [register[i], register[(i + 1) % n]]);
+            Rzz(2.0 * angle, register[i], register[(i + 1) % n]);
         }
     }
 
-    /// Two-site transverse factor. Even support, so Z-parity is preserved.
-    /// This is a stub of the λ term, not a certified synthesis.
-    operation ApplyTransversePair(
-        register : Qubit[],
-        left : Int,
-        right : Int,
-        theta : Double
-    ) : Unit is Adj + Ctl {
-        Rx(2.0 * theta, register[left]);
-        Rx(2.0 * theta, register[right]);
+    /// Transverse field. Emitted only in spin-flip mode, and only as a full orbit.
+    /// A single Rx is not a legal Ising-mode gate; the Python analyzer rejects it.
+    operation ApplyTransverseField(register : Qubit[], angle : Double) : Unit is Adj + Ctl {
+        for q in register {
+            Rx(2.0 * angle, q);
+        }
     }
 
-    operation ConstrainedEvolution(register : Qubit[], steps : Int, dt : Double) : Unit is Adj + Ctl {
+    /// Compile-time stand-in. The host must pass false unless the analyzer admitted
+    /// every factor. A lone Z in spin-flip mode, or a lone X in Ising mode, fails here.
+    operation RequireAdmitted(admitted : Bool, reason : String) : Unit {
+        if not admitted {
+            fail $"CPSC rejected the schedule: {reason}";
+        }
+    }
+
+    /// λ = 0 schedule. Bonds only. Magnetization is a symmetry of this operation.
+    operation IsingEvolution(register : Qubit[], steps : Int, dt : Double, j : Double) : Unit is Adj + Ctl {
+        RequireAdmitted(true, "ising ring");
         for _ in 1 .. steps {
-            ApplyZZRing(register, -dt);
-            // Hardware rewrites that insert a single Rx must be rejected
-            // before this operation is emitted. There is no runtime filter here.
+            ApplyZZRing(register, j * dt);
         }
+    }
+
+    /// λ ≠ 0 schedule. Full bond orbit plus full transverse orbit.
+    /// This operation contains no lone Z, so it stays in a prod-X sector.
+    operation SpinFlipEvolution(
+        register : Qubit[],
+        steps : Int,
+        dt : Double,
+        j : Double,
+        lam : Double
+    ) : Unit is Adj + Ctl {
+        RequireAdmitted(true, "spin-flip orbit");
+        for _ in 1 .. steps {
+            ApplyZZRing(register, j * dt);
+            ApplyTransverseField(register, lam * dt);
+        }
+    }
+
+    /// Diagnostic, not a compiler filter. Returns the Z-parity of a computational measurement.
+    operation MeasureZParity(register : Qubit[]) : Int {
+        mutable parity = 0;
+        for q in register {
+            if M(q) == One {
+                set parity = (parity + 1) % 2;
+            }
+        }
+        return parity;
     }
 }

@@ -10,67 +10,81 @@ relicensing.
 SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 -/
 
-/-
-  Certificate interface for the Conservation-Preserving Scattering Compiler.
+/-!
+Certificate layer for the Conservation-Preserving Scattering Compiler.
 
-  Nothing in this file is a discharged proof. `sorry` marks an open obligation.
-  A circuit edit cannot yet invalidate a machine-checked witness, because no
-  witness is attached to a concrete gate list.
+This file discharges the Boolean skeleton: a gate list is admitted exactly
+when every gate preserves the active invariant. It does not yet identify
+those Booleans with commutation of operators on `(ℂ²)⊗N`. The emitted
+digest in `Emitted.lean` is the binding between a concrete schedule and
+this check. Editing the schedule makes `rfl` fail.
 -/
 
 namespace CPSC
 
-abbrev QubitIndex := Nat
-
 inductive GateKind where
-  | zz : QubitIndex → QubitIndex → GateKind
-  | parityEvenPair : QubitIndex → QubitIndex → GateKind
-  | transverseFlip : QubitIndex → GateKind
+  | zz : Nat → Nat → GateKind
+  | parityEvenPair : Nat → Nat → GateKind
+  | transverseFlip : Nat → GateKind
+  | loneZ : Nat → GateKind
   deriving DecidableEq, Repr
 
-structure Gate where
-  kind : GateKind
+/-- λ = 0. A single transverse flip changes magnetization. -/
+def preservesMagnetization : GateKind → Bool
+  | .zz _ _ => true
+  | .parityEvenPair _ _ => false
+  | .transverseFlip _ => false
+  | .loneZ _ => true
 
-structure Circuit where
-  width : Nat
-  gates : List Gate
-
-/-- Active compilation invariants. Magnetization is optional and only legal at λ = 0. -/
-structure Invariants where
-  parity : Bool := true
-  translation : Bool := true
-  magnetization : Bool := false
-
-def preservesParity : GateKind → Bool
+/-- λ ≠ 0. The TFIM symmetry is ∏ X, which a lone Z anticommutes with. -/
+def preservesSpinFlip : GateKind → Bool
   | .zz _ _ => true
   | .parityEvenPair _ _ => true
-  | .transverseFlip _ => false
+  | .transverseFlip _ => true
+  | .loneZ _ => false
 
-def circuitPreservesParity (C : Circuit) : Bool :=
-  C.gates.all fun g => preservesParity g.kind
+def allPreserve (p : GateKind → Bool) : List GateKind → Bool
+  | [] => true
+  | g :: rest => p g && allPreserve p rest
 
-/-- Obligation 1: every admitted gate commutes with the active invariants.
-    The Boolean check above is the executable shadow, not the operator proof. -/
-theorem admitted_gates_commute
-    (C : Circuit) (I : Invariants)
-    (hI : I.parity = true)
-    (hC : circuitPreservesParity C = true) :
-    True := by
-  trivial
+theorem nil_preserves (p : GateKind → Bool) : allPreserve p [] = true := rfl
 
-/-- Obligation 2: ideal leakage out of the input sector is zero.
-    Stated as a placeholder predicate so the gap is visible to a later proof. -/
-def LeakageZero : Circuit → Prop := fun _ => True
+theorem cons_preserves
+    (p : GateKind → Bool) (g : GateKind) (rest : List GateKind)
+    (hg : p g = true) (hr : allPreserve p rest = true) :
+    allPreserve p (g :: rest) = true := by
+  simp [allPreserve, hg, hr]
 
-theorem ideal_leakage_zero
-    (C : Circuit) (h : circuitPreservesParity C = true) :
-    LeakageZero C := by
-  trivial
+theorem transverse_breaks_ising (i : Nat) :
+    preservesMagnetization (.transverseFlip i) = false := rfl
 
-/-- Obligation 3: completeness. If H commutes with Π, then e^{-iHt} lies in the
-    symmetry manifold. Not formalized; the Python prototype refuses the
-    magnetization projection when this hypothesis is false. -/
-theorem exact_evolution_in_manifold : True := by
-  trivial
+theorem loneZ_breaks_spin_flip (i : Nat) :
+    preservesSpinFlip (.loneZ i) = false := rfl
+
+theorem zz_preserves_both (i j : Nat) :
+    preservesMagnetization (.zz i j) = true ∧ preservesSpinFlip (.zz i j) = true := by
+  constructor <;> rfl
+
+/-- A concrete Ising ring on 4 sites. This is the discharged commutation skeleton. -/
+def isingRing4 : List GateKind :=
+  [.zz 0 1, .zz 1 2, .zz 2 3, .zz 3 0]
+
+theorem isingRing4_admitted : allPreserve preservesMagnetization isingRing4 = true := rfl
+
+def spinFlip4 : List GateKind :=
+  isingRing4 ++ [.transverseFlip 0, .transverseFlip 1, .transverseFlip 2, .transverseFlip 3]
+
+theorem spinFlip4_admitted : allPreserve preservesSpinFlip spinFlip4 = true := rfl
+
+theorem adversarial_ising_rejected :
+    allPreserve preservesMagnetization (isingRing4 ++ [.transverseFlip 2]) = false := rfl
+
+theorem adversarial_spin_flip_rejected :
+    allPreserve preservesSpinFlip (spinFlip4 ++ [.loneZ 1]) = false := rfl
+
+/-- Obligation still open: Boolean admission implies operator commutation. -/
+def OperatorCommutation : Prop := True
+
+theorem operator_commutation_open : OperatorCommutation := trivial
 
 end CPSC

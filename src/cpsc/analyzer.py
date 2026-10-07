@@ -13,22 +13,29 @@
 
 """Compilation-time symmetry analyzer.
 
-A gate is admitted only if it preserves every active invariant on the
-computational basis. This is a rejection rule, not a post-selection filter.
+A gate is admitted only if it preserves the active invariant. This is a
+rejection rule, not a post-selection filter.
+
+Ising mode (lambda = 0) conserves magnetization and Z-parity. A single X is
+forbidden. Spin-flip mode (lambda != 0) conserves prod X, the actual symmetry
+of the transverse-field Ising model. A single Z is forbidden; a single X is not.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
+
+
+class SymmetryMode(str, Enum):
+    ISING = "ising"
+    SPIN_FLIP = "spin_flip"
 
 
 @dataclass(frozen=True)
 class Gate:
     name: str
-    # Support as qubit indices. Empty means a declared global gate.
     qubits: tuple[int, ...]
-    # "parity_even" preserves prod Z. "magnetization" also preserves sum Z.
-    # "illegal" is the adversarial class (odd number of X/Y).
     kind: str
 
 
@@ -38,12 +45,23 @@ class Rejection:
     reason: str
 
 
+class CompilationRejected(Exception):
+    """Raised when the analyzer refuses a circuit at compile time."""
+
+
 class SymmetryAnalyzer:
-    def __init__(self, n: int, *, conserve_magnetization: bool = False) -> None:
+    def __init__(
+        self,
+        n: int,
+        *,
+        conserve_magnetization: bool = False,
+        mode: SymmetryMode | str = SymmetryMode.ISING,
+    ) -> None:
         if n < 1:
             raise ValueError("n must be positive")
         self.n = n
-        self.conserve_magnetization = conserve_magnetization
+        self.mode = SymmetryMode(mode)
+        self.conserve_magnetization = conserve_magnetization or self.mode is SymmetryMode.ISING
 
     def check(self, gates: list[Gate]) -> list[Rejection]:
         rejected: list[Rejection] = []
@@ -64,31 +82,25 @@ class SymmetryAnalyzer:
         for q in gate.qubits:
             if not 0 <= q < self.n:
                 return f"qubit {q} outside lattice of size {self.n}"
-        if gate.kind == "illegal":
-            return "odd X/Y support changes Z-parity; forbidden sector"
-        if gate.kind == "parity_even":
-            return None
-        if gate.kind == "magnetization":
-            if self.conserve_magnetization:
+        if self.mode is SymmetryMode.ISING:
+            if gate.kind in {"illegal", "transverse"}:
+                return "odd X/Y support changes Z-parity; forbidden sector"
+            if gate.kind in {"parity_even", "magnetization", "phase"}:
                 return None
-            return None
-        if gate.kind == "transverse":
-            # A single X preserves parity (X anticommutes with Z, and P_Z picks
-            # up one minus sign, so P_Z X = -X P_Z... wait).
-            #
-            # Careful: X_i anticommutes with Z_i and commutes with other Z.
-            # P_Z = prod Z_j, so X_i P_Z = - P_Z X_i. A single X does NOT
-            # commute with parity. Two X gates do.
-            return "single transverse flip anticommutes with prod Z"
+        else:
+            if gate.kind == "phase":
+                return "lone Z anticommutes with prod X; forbidden spin-flip sector"
+            if gate.kind in {"illegal", "transverse", "parity_even", "magnetization"}:
+                return None
         return f"unknown gate kind {gate.kind}"
-
-
-class CompilationRejected(Exception):
-    """Raised when the analyzer refuses a circuit at compile time."""
 
 
 def x(q: int) -> Gate:
     return Gate(f"X[{q}]", (q,), "illegal")
+
+
+def z(q: int) -> Gate:
+    return Gate(f"Z[{q}]", (q,), "phase")
 
 
 def zz(q: int, r: int) -> Gate:
@@ -96,5 +108,13 @@ def zz(q: int, r: int) -> Gate:
 
 
 def rx_pair(q: int, r: int) -> Gate:
-    """Two transverse flips: parity-even, magnetization-changing."""
+    """Two transverse flips. Parity-even under prod Z, magnetization-changing."""
     return Gate(f"RX[{q}]*RX[{r}]", (q, r), "parity_even")
+
+
+def ising_ring(n: int) -> list[Gate]:
+    return [zz(i, (i + 1) % n) for i in range(n)]
+
+
+def transverse_field(n: int) -> list[Gate]:
+    return [x(i) for i in range(n)]

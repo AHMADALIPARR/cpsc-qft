@@ -1,12 +1,10 @@
 <!--
 Copyright (c) 2026 Ahmad Ali Parr and others.
 SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
-This file is dual-licensed under the CPSC Eclipse Strict Copyleft License v1.0
-or the GNU AGPL v3 only. Both are strict copyleft.
 -->
 
 # Abstract
 
-We describe a compilation architecture for lattice scattering in which the symmetries of the target Hamiltonian are constraints on synthesis rather than filters on shots. For the periodic transverse-field Ising model used as the qubit shadow of 1+1D $\phi^4$, the conserved quantities available at compile time are Z-parity and lattice translation. Total magnetization is conserved only in the classical Ising limit. The quartic $\sum_i X_i^4$ is an identity and does not define a channel.
+We implement a compilation architecture for lattice scattering in which the symmetries of the target Hamiltonian are constraints on synthesis rather than filters on shots. The working model is the periodic transverse-field Ising chain, the qubit shadow of 1+1D φ⁴, not continuum φ⁴. Two facts fix the compiler. The quartic written as ∑ᵢ Xᵢ⁴ is an identity. Z-parity is a symmetry only at λ = 0; for λ ≠ 0 the symmetry is the spin flip ∏ᵢ Xᵢ.
 
-The repository supplies a symmetry analyzer that rejects parity-odd gates before execution, a sector-restricted exponentiation with zero ideal leakage, a Q# stub of the admitted Trotter factors, and a Lean 4 interface for the three proof obligations (commutation, leakage, completeness). Those obligations are not discharged. The construction collides with existing symmetry-sector simulators and verified circuit compilers; the unresolved piece is a certificate bound to a concrete QFT channel so that an edited circuit fails closed.
+The repository supplies a symmetry analyzer, a translation-orbit check, a first-order Trotter product of admitted gates, a Q# emission of those factors, and a certificate whose SHA-256 digest is bound to the gate list. On a 4-site chain the Ising schedule has Z-parity leakage 0, and the spin-flip schedule has ∏ X leakage 0 within roundoff. Inserting a forbidden gate fails compilation. A Boolean Lean skeleton discharges admission for the concrete rings; operator commutation on (ℂ²)⊗N remains an open obligation.

@@ -40,6 +40,16 @@ The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the i
 | Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. |
 
 
+
+<p align="center">
+  <a href="docs/mercury-circuit-demo.mp4">
+    <img src="docs/mercury-circuit-demo.gif" alt="Programming a GHZ circuit in Mercury, then the compile-time rejection and the admitted Ising ring" width="720">
+  </a>
+  <br>
+  <a href="docs/mercury-circuit-demo.mp4">Mercury circuit demo (MP4)</a>
+  · GHZ ladder written, rejected, replaced by an admitted ZZ ring
+</p>
+
 ## Site
 
 GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.github.io/cpsc-qft/qsim.html). Rebuild it from the frontend with `frontend/web/build.sh`, which copies the bundle into `docs/`.

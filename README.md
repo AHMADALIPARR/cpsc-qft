@@ -1,3 +1,10 @@
+<!--
+Copyright (c) 2026 Ahmad Ali Parr and others.
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+This file is dual-licensed under the CPSC Eclipse Strict Copyleft License v1.0
+or the GNU AGPL v3 only. Both are strict copyleft.
+-->
+
 # CPSC — Conservation-Preserving Scattering Compiler
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
@@ -72,4 +79,9 @@ This is not a new symmetry. Block-diagonalization by a conserved charge is textb
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Dual strict copyleft. You may use this repository under either:
+
+- the CPSC Eclipse Strict Copyleft License, Version 1.0 (`LicenseRef-CPSC-ESCL-1.0`), or
+- the GNU Affero General Public License, Version 3 only (`AGPL-3.0-only`).
+
+Both options are strict copyleft, including network use. This is not the Eclipse Public License, and it is not Apache-2.0. There is no classpath exception and no permissive relicensing. Headers on each source file are part of the notice. See [LICENSE](LICENSE), [NOTICE](NOTICE), and [LICENSES/](LICENSES/).

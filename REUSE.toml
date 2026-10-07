@@ -1,0 +1,13 @@
+version = 1
+
+[[annotations]]
+path = ["LICENSE", "NOTICE", "LICENSES/CPSC-ESCL-1.0.txt", "lean/lean-toolchain", ".gitignore"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Ahmad Ali Parr"
+SPDX-License-Identifier = "LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only"
+
+[[annotations]]
+path = ["LICENSES/AGPL-3.0.txt"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc."
+SPDX-License-Identifier = "FSFAP"

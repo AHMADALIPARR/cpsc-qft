@@ -1,17 +1,23 @@
-Apache License
-Version 2.0, January 2004
-http://www.apache.org/licenses/
+CPSC Eclipse Strict Copyleft License, Version 1.0
+or, at your option, the GNU Affero General Public License, Version 3 only.
 
-Copyright 2026 Ahmad Ali Parr
+Copyright (c) 2026 Ahmad Ali Parr
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+This repository is dual-licensed under:
 
-    http://www.apache.org/licenses/LICENSE-2.0
+  (A) the CPSC Eclipse Strict Copyleft License, Version 1.0
+      (LicenseRef-CPSC-ESCL-1.0), in LICENSES/CPSC-ESCL-1.0.txt
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+  (B) the GNU Affero General Public License, Version 3 only
+      (AGPL-3.0-only), in LICENSES/AGPL-3.0.txt
+
+You may use the work under either license. Both are strict copyleft.
+Neither option is the Eclipse Public License, the Apache License, or a
+permissive grant. There is no classpath exception. A recipient may not
+relicense the work, or a modified version of it, under MIT, Apache-2.0,
+BSD, EPL-2.0, or any other non-strict-copyleft license.
+
+File headers are part of the license notice. Keep them.
+
+This custom instrument is not issued by the Eclipse Foundation and grants
+no right to Eclipse trademarks.

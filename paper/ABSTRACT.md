@@ -1,3 +1,10 @@
+<!--
+Copyright (c) 2026 Ahmad Ali Parr and others.
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+This file is dual-licensed under the CPSC Eclipse Strict Copyleft License v1.0
+or the GNU AGPL v3 only. Both are strict copyleft.
+-->
+
 # Abstract
 
 We describe a compilation architecture for lattice scattering in which the symmetries of the target Hamiltonian are constraints on synthesis rather than filters on shots. For the periodic transverse-field Ising model used as the qubit shadow of 1+1D $\phi^4$, the conserved quantities available at compile time are Z-parity and lattice translation. Total magnetization is conserved only in the classical Ising limit. The quartic $\sum_i X_i^4$ is an identity and does not define a channel.

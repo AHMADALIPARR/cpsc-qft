@@ -1,3 +1,10 @@
+<!--
+Copyright (c) 2026 Ahmad Ali Parr and others.
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+This file is dual-licensed under the CPSC Eclipse Strict Copyleft License v1.0
+or the GNU AGPL v3 only. Both are strict copyleft.
+-->
+
 # Channel pruning for a 1+1 → 1+2 process
 
 The draft asked for an inelastic $1+1 \to 1+2$ collision whose output lies strictly in the input energy manifold.

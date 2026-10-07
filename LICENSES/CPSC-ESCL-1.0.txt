@@ -1,0 +1,149 @@
+CPSC Eclipse Strict Copyleft License
+Version 1.0, 7 October 2026
+
+Copyright (c) 2026 Ahmad Ali Parr
+
+This license is a custom instrument for the Conservation-Preserving
+Scattering Compiler. It uses the Eclipse project notice style (copyright
+header, SPDX identifier, accompanying-materials clause). It is not the
+Eclipse Public License 1.0 or 2.0, it is not issued by the Eclipse
+Foundation, and it grants no license to any Eclipse trademark.
+
+The copyleft in this instrument is strict. It is taken from the dual
+offer of the GNU Affero General Public License, Version 3 only
+("AGPL-3.0-only"), including that license's network-use source obligation.
+Where this text and the AGPL both apply by the recipient's choice, the
+chosen text governs. Where a downstream distributor offers the work
+onward, both options must remain available.
+
+0. Definitions.
+
+"This License" means version 1.0 of the CPSC Eclipse Strict Copyleft
+License.
+
+"The Program" means any copyrightable work licensed under this License.
+
+"You" means the licensee.
+
+"Modify" means copy from or adapt all or part of the Program in a fashion
+requiring copyright permission, other than making an exact copy.
+
+"Covered work" means the unmodified Program or a work based on it,
+including a translation, a hardware mapping, a gate-list rewrite, a
+certificate binding, and a library linked so as to form a larger program.
+
+"Corresponding Source" means the preferred form for modifying the work,
+including scripts required to build and run it, and excluding only system
+libraries and unmodified general-purpose tools.
+
+"Convey" means any propagation that enables other parties to make or
+receive copies. Remote interaction by users with a modified covered work
+is treated as conveying for the source obligation in section 5.
+
+1. Grant.
+
+You receive a worldwide, royalty-free, non-exclusive copyright license to
+run, study, modify, and convey the Program, and a patent license under
+the contributors' essential patent claims, only if you comply with this
+License. These grants are irrevocable for the term of copyright if you
+remain in compliance.
+
+2. Dual offer.
+
+The Program is licensed under this License or, at your option, under the
+GNU Affero General Public License, Version 3 only. The AGPL text is
+included as LICENSES/AGPL-3.0.txt and may not be modified. Choosing the
+AGPL does not extinguish the obligation, when you convey a modified
+version, to keep the dual offer available to your recipients.
+
+3. Strict copyleft.
+
+You may convey a modified covered work only under this same dual offer,
+as a whole, to anyone who receives a copy. You may not:
+
+  (a) relicense the work, or any part of it, under a permissive license
+      or a weak-copyleft license, including MIT, BSD, Apache-2.0,
+      EPL-1.0, EPL-2.0, LGPL, or MPL;
+
+  (b) add a classpath exception, linking exception, or other term that
+      lets a proprietary work incorporate the Program without itself
+      becoming a covered work;
+
+  (c) impose a further restriction that would be forbidden by AGPL-3.0
+      section 10;
+
+  (d) remove or alter the copyright header, the SPDX identifier
+      "LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only", or the statement that
+      both options are strict copyleft.
+
+A compilation on a storage medium with independent works is an aggregate
+only if the compilation does not limit users' rights beyond what this
+License allows. Inclusion in an aggregate does not extend this License
+to independent works.
+
+4. Source with binaries.
+
+If you convey a covered work in object form, you must also convey the
+Corresponding Source under this dual offer, on a durable medium, by a
+written offer valid for at least three years, or by equivalent network
+access at no further charge, in the manner of AGPL-3.0 section 6.
+
+5. Network use.
+
+If you modify a covered work and users interact with it remotely through
+a computer network, you must offer those users Corresponding Source of
+the modified work under this dual offer, at no charge, by a prominent
+network offer. This is the AGPL-3.0 section 13 obligation, and it applies
+whether the recipient elects this License or the AGPL.
+
+6. Headers.
+
+Every source file of a covered work must carry a notice substantially
+in the Eclipse header form:
+
+  Copyright (c) <year> <holder> and others.
+  Made available under the CPSC Eclipse Strict Copyleft License,
+  Version 1.0, or, at your option, the GNU AGPL Version 3 only.
+  SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+
+Files that cannot carry an inline comment must be listed, with the same
+SPDX expression, in REUSE.toml.
+
+7. Notices and marks.
+
+Keep intact all notices of this License, of the AGPL, and of the absence
+of warranty. Do not use the names Eclipse, Eclipse Foundation, or CPSC
+to endorse a derivative without written permission. No trademark is
+granted.
+
+8. Termination.
+
+If you violate this License, your rights end. They reinstate if you cure
+the violation within 30 days of notice, or permanently if the holder
+fails to notify you within 60 days of ceasing the violation, following
+the pattern of AGPL-3.0 section 8. Downstream recipients who received
+copies while you were in compliance keep their licenses.
+
+9. No surrender of others' freedom.
+
+If conditions are imposed on you that contradict this License, you may
+not convey the work at all.
+
+10. Disclaimer of warranty.
+
+THE PROGRAM IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING FITNESS FOR A PARTICULAR PURPOSE AND
+NON-INFRINGEMENT. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE IS WITH
+YOU.
+
+11. Limitation of liability.
+
+IN NO EVENT WILL A COPYRIGHT HOLDER OR CONTRIBUTOR BE LIABLE FOR DAMAGES
+ARISING FROM THE PROGRAM, UNDER ANY THEORY, UNLESS REQUIRED BY LAW OR
+AGREED IN WRITING.
+
+12. Versioning.
+
+Only Ahmad Ali Parr may publish a new version of this License. A later
+version applies to the Program only if a notice says so. The dual AGPL
+option remains AGPL-3.0-only unless a later notice says otherwise.

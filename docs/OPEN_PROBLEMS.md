@@ -1,3 +1,10 @@
+<!--
+Copyright (c) 2026 Ahmad Ali Parr and others.
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+This file is dual-licensed under the CPSC Eclipse Strict Copyleft License v1.0
+or the GNU AGPL v3 only. Both are strict copyleft.
+-->
+
 # Open problems
 
 Marked `POSSIBLY_NOVEL` in the draft. The honest status is: architectural sketch, partially prototyped, not prior-art cleared, not formally verified.

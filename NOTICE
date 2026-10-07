@@ -1,0 +1,19 @@
+CPSC — Conservation-Preserving Scattering Compiler
+Copyright (c) 2026 Ahmad Ali Parr and others.
+
+This program and the accompanying materials are made available under the
+terms of the CPSC Eclipse Strict Copyleft License, Version 1.0, which is
+available in LICENSES/CPSC-ESCL-1.0.txt, or, at your option, under the
+GNU Affero General Public License, Version 3 only, which is available in
+LICENSES/AGPL-3.0.txt.
+
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+
+This is not an Eclipse Foundation project. The notice form follows the
+Eclipse accompanying-materials convention. The copyleft is the strict
+network copyleft of the dual AGPL-3.0-only offer. No classpath exception
+is granted.
+
+Third-party: LICENSES/AGPL-3.0.txt is the GNU Affero General Public
+License, Version 3, Copyright (C) 2007 Free Software Foundation, Inc.
+Verbatim copies of that license text are permitted; changing it is not.

@@ -1,3 +1,13 @@
+# *******************************************************************************
+# Copyright (c) 2026 Ahmad Ali Parr and others.
+#
+# This program and the accompanying materials are made available under the
+# terms of the CPSC Eclipse Strict Copyleft License, Version 1.0, or, at your
+# option, the GNU Affero General Public License, Version 3 only.
+#
+# SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+# *******************************************************************************
+
 name = "CPSC"
 version = "0.1.0"
 defaultTargets = ["CPSC"]

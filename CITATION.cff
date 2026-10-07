@@ -10,7 +10,7 @@ authors:
     given-names: Ahmad Ali
 version: 0.1.0
 date-released: 2026-10-07
-license: Apache-2.0
+license: AGPL-3.0-only
 repository-code: "https://github.com/AHMADALIPARR/cpsc-qft"
 keywords:
   - quantum-field-theory
@@ -18,3 +18,4 @@ keywords:
   - lean4
   - scattering
   - symmetry
+license-url: "https://github.com/AHMADALIPARR/cpsc-qft/blob/main/LICENSE"

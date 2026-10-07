@@ -1,4 +1,16 @@
 /-
+Copyright (c) 2026 Ahmad Ali Parr and others.
+
+This program and the accompanying materials are made available under the
+terms of the CPSC Eclipse Strict Copyleft License, Version 1.0, or, at your
+option, the GNU Affero General Public License, Version 3 only. Both options
+are strict copyleft. There is no classpath exception and no permissive
+relicensing.
+
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+-/
+
+/-
   Certificate interface for the Conservation-Preserving Scattering Compiler.
 
   Nothing in this file is a discharged proof. `sorry` marks an open obligation.

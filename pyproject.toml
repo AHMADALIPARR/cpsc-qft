@@ -10,7 +10,7 @@
 
 [project]
 name = "cpsc-qft"
-version = "0.2.0"
+version = "0.3.0"
 description = "Conservation-Preserving Scattering Compiler research scaffold"
 readme = "README.md"
 requires-python = ">=3.10"

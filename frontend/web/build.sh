@@ -24,3 +24,8 @@ ruby -c mercury_bundle.rb
 echo "wrote mercury_bundle.rb ($(wc -c < mercury_bundle.rb) bytes), qsim.html is index.html"
 cp index.html qsim.html
 echo "wrote qsim.html ($(wc -c < qsim.html) bytes)"
+mkdir -p ../../docs
+cp qsim.html ../../docs/qsim.html
+cp mercury_bundle.rb ../../docs/mercury_bundle.rb
+python3 -c 'from pathlib import Path; q=Path("../../docs/qsim.html"); q.write_text(q.read_text().replace("href=\"./index.html\"", "href=\"./\""))'
+echo "published docs/qsim.html and docs/mercury_bundle.rb"

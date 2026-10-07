@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Ahmad Ali Parr and others.
+SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPSC-QFT — Conservation-Preserving Scattering Compiler</title>
+<meta name="description" content="Compilation-time symmetry constraints for a 1+1D lattice shadow of phi^4. Mercury console, Lean certificate, Q# emission.">
+<style>
+  :root { --bg:#0a0e14; --panel:#111722; --line:#1e2a3a; --txt:#d6e2f0; --dim:#7d8ea8; --acc:#5cc8ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  header, main, footer { max-width:880px; margin:0 auto; padding:28px 20px; }
+  header { border-bottom:1px solid var(--line); }
+  h1 { margin:0 0 8px; letter-spacing:2px; color:var(--acc); font-size:22px; }
+  p { line-height:1.55; color:var(--dim); }
+  a { color:var(--acc); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:700px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .card h2 { margin:0 0 8px; font-size:13px; letter-spacing:1px; color:var(--txt); }
+  code { color:var(--txt); }
+  footer { color:var(--dim); font-size:12px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <h1>CPSC-QFT</h1>
+  <p>Conservation-preserving scattering compiler for a 1+1D lattice shadow of φ⁴. Version 0.3.0. Dual strict copyleft.</p>
+</header>
+<main>
+  <div class="grid">
+    <div class="card">
+      <h2>Mercury console</h2>
+      <p>Ruby 3.2 in the browser. Build a circuit, run the statevector, and see the compile-time symmetry verdict.</p>
+      <p><a href="qsim.html">Open the console</a></p>
+    </div>
+    <div class="card">
+      <h2>Paper</h2>
+      <p>What is proved, what is measured, and which operator is actually conserved.</p>
+      <p><a href="https://github.com/AHMADALIPARR/cpsc-qft/blob/main/paper/PAPER.md">paper/PAPER.md</a></p>
+    </div>
+    <div class="card">
+      <h2>Certificate</h2>
+      <p>Boolean lemmas are proved. Operator commutation is an explicit axiom set. <code>lake build</code> passes on Lean 4.22.0.</p>
+      <p><a href="https://github.com/AHMADALIPARR/cpsc-qft/blob/main/lean/CPSC/Lemmas.lean">Lemmas.lean</a></p>
+    </div>
+    <div class="card">
+      <h2>Source</h2>
+      <p>Python compiler, Q# emission, Mercury library. Tests live next to the code.</p>
+      <p><a href="https://github.com/AHMADALIPARR/cpsc-qft">AHMADALIPARR/cpsc-qft</a></p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h2>Release check</h2>
+    <p>Ising mode (λ = 0) rejects a single X. Spin-flip mode (λ ≠ 0) rejects a lone Z. The console analyzer still mirrors the Z-parity bridge in <code>frontend/lib/mercury/cpsc.rb</code>; the Python compiler is the mode-accurate path. WASM is loaded from jsDelivr, so the console needs network.</p>
+  </div>
+</main>
+<footer>
+  LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only. Not the Eclipse Public License.
+</footer>
+</body>
+</html>

@@ -39,6 +39,11 @@ The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the i
 | Momentum $P$ | Generator of the cyclic shift $T$ | Specified. Translation averaging is implemented classically for diagonal checks; block synthesis is not. |
 | Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. |
 
+
+## Site
+
+GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.github.io/cpsc-qft/qsim.html). Rebuild it from the frontend with `frontend/web/build.sh`, which copies the bundle into `docs/`.
+
 ## Layout
 
 ```

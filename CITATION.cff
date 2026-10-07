@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this scaffold, cite it as software, not as a discharged formalization."
+title: "CPSC: Conservation-Preserving Scattering Compiler"
+abstract: >
+  Research scaffold for compilation-time enforcement of lattice momentum and
+  charge in 1+1D qubit-lattice scattering, with a Lean 4 certificate interface
+  and an executable symmetry analyzer. Proof obligations are open.
+authors:
+  - family-names: Parr
+    given-names: Ahmad Ali
+version: 0.1.0
+date-released: 2026-10-07
+license: Apache-2.0
+repository-code: "https://github.com/AHMADALIPARR/cpsc-qft"
+keywords:
+  - quantum-field-theory
+  - formal-verification
+  - lean4
+  - scattering
+  - symmetry

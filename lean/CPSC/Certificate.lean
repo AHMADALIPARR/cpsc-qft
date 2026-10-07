@@ -11,13 +11,10 @@ SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 -/
 
 /-!
-Certificate layer for the Conservation-Preserving Scattering Compiler.
+Boolean certificate layer.
 
-This file discharges the Boolean skeleton: a gate list is admitted exactly
-when every gate preserves the active invariant. It does not yet identify
-those Booleans with commutation of operators on `(ℂ²)⊗N`. The emitted
-digest in `Emitted.lean` is the binding between a concrete schedule and
-this check. Editing the schedule makes `rfl` fail.
+These lemmas are proved. They do not mention operators. The operator axioms
+live in `CPSC.Axioms`, and the bridge lemmas in `CPSC.Lemmas`.
 -/
 
 namespace CPSC
@@ -27,6 +24,11 @@ inductive GateKind where
   | parityEvenPair : Nat → Nat → GateKind
   | transverseFlip : Nat → GateKind
   | loneZ : Nat → GateKind
+  deriving DecidableEq, Repr
+
+inductive Mode where
+  | ising
+  | spinFlip
   deriving DecidableEq, Repr
 
 /-- λ = 0. A single transverse flip changes magnetization. -/
@@ -43,11 +45,21 @@ def preservesSpinFlip : GateKind → Bool
   | .transverseFlip _ => true
   | .loneZ _ => false
 
+def preserves : Mode → GateKind → Bool
+  | .ising, g => preservesMagnetization g
+  | .spinFlip, g => preservesSpinFlip g
+
 def allPreserve (p : GateKind → Bool) : List GateKind → Bool
   | [] => true
   | g :: rest => p g && allPreserve p rest
 
+def admitted (mode : Mode) (gs : List GateKind) : Bool :=
+  allPreserve (preserves mode) gs
+
 theorem nil_preserves (p : GateKind → Bool) : allPreserve p [] = true := rfl
+
+theorem bool_and_parts {a b : Bool} (h : (a && b) = true) : a = true ∧ b = true := by
+  cases a <;> cases b <;> simp_all
 
 theorem cons_preserves
     (p : GateKind → Bool) (g : GateKind) (rest : List GateKind)
@@ -55,8 +67,34 @@ theorem cons_preserves
     allPreserve p (g :: rest) = true := by
   simp [allPreserve, hg, hr]
 
+theorem allPreserve_cons_iff
+    (p : GateKind → Bool) (g : GateKind) (rest : List GateKind) :
+    allPreserve p (g :: rest) = true ↔ p g = true ∧ allPreserve p rest = true := by
+  constructor
+  · intro h
+    exact bool_and_parts h
+  · intro h
+    exact cons_preserves p g rest h.1 h.2
+
+theorem allPreserve_append
+    (p : GateKind → Bool) (xs ys : List GateKind) :
+    allPreserve p (xs ++ ys) = (allPreserve p xs && allPreserve p ys) := by
+  induction xs with
+  | nil => simp [allPreserve]
+  | cons g rest ih =>
+    simp [allPreserve, List.cons_append, ih, Bool.and_assoc]
+
+theorem allPreserve_of_append
+    (p : GateKind → Bool) {xs ys : List GateKind}
+    (h : allPreserve p (xs ++ ys) = true) :
+    allPreserve p xs = true ∧ allPreserve p ys = true :=
+  bool_and_parts (by simpa [allPreserve_append] using h)
+
 theorem transverse_breaks_ising (i : Nat) :
     preservesMagnetization (.transverseFlip i) = false := rfl
+
+theorem pair_breaks_ising (i j : Nat) :
+    preservesMagnetization (.parityEvenPair i j) = false := rfl
 
 theorem loneZ_breaks_spin_flip (i : Nat) :
     preservesSpinFlip (.loneZ i) = false := rfl
@@ -65,7 +103,22 @@ theorem zz_preserves_both (i j : Nat) :
     preservesMagnetization (.zz i j) = true ∧ preservesSpinFlip (.zz i j) = true := by
   constructor <;> rfl
 
-/-- A concrete Ising ring on 4 sites. This is the discharged commutation skeleton. -/
+theorem flip_preserves_spin (i : Nat) :
+    preservesSpinFlip (.transverseFlip i) = true := rfl
+
+theorem z_preserves_ising (i : Nat) :
+    preservesMagnetization (.loneZ i) = true := rfl
+
+theorem mode_switch_flip (i : Nat) :
+    preserves .ising (.transverseFlip i) = false ∧
+    preserves .spinFlip (.transverseFlip i) = true := by
+  constructor <;> rfl
+
+theorem mode_switch_z (i : Nat) :
+    preserves .ising (.loneZ i) = true ∧
+    preserves .spinFlip (.loneZ i) = false := by
+  constructor <;> rfl
+
 def isingRing4 : List GateKind :=
   [.zz 0 1, .zz 1 2, .zz 2 3, .zz 3 0]
 
@@ -82,9 +135,21 @@ theorem adversarial_ising_rejected :
 theorem adversarial_spin_flip_rejected :
     allPreserve preservesSpinFlip (spinFlip4 ++ [.loneZ 1]) = false := rfl
 
-/-- Obligation still open: Boolean admission implies operator commutation. -/
-def OperatorCommutation : Prop := True
+theorem rejected_cons
+    (p : GateKind → Bool) (g : GateKind) (rest : List GateKind)
+    (hg : p g = false) :
+    allPreserve p (g :: rest) = false := by
+  simp [allPreserve, hg]
 
-theorem operator_commutation_open : OperatorCommutation := trivial
+theorem adversarial_head_rejected (i : Nat) (rest : List GateKind) :
+    admitted .ising (.transverseFlip i :: rest) = false :=
+  rejected_cons _ _ _ (transverse_breaks_ising i)
+
+/-- Orbit closure is a predicate on supports. A ring of length n is the full orbit of one bond. -/
+def bondOrbit (n : Nat) : List GateKind :=
+  List.range n |>.map fun i => .zz i ((i + 1) % n)
+
+theorem bondOrbit_four_agrees : bondOrbit 4 = isingRing4 := by
+  rfl
 
 end CPSC

@@ -18,40 +18,37 @@ namespace ConservationPreservingScattering {
     open Microsoft.Quantum.Measurement;
     open Microsoft.Quantum.Convert;
 
-    /// Ising bond. ZZ commutes with both ∏ Z and ∏ X.
+    /// Ising bond orbit. Calls the ZZ axiom on every cyclic image.
     operation ApplyZZRing(register : Qubit[], angle : Double) : Unit is Adj + Ctl {
         let n = Length(register);
         for i in 0 .. n - 1 {
-            Rzz(2.0 * angle, register[i], register[(i + 1) % n]);
+            Axiom_ApplyZZ(register[i], register[(i + 1) % n], angle);
         }
     }
 
-    /// Transverse field. Emitted only in spin-flip mode, and only as a full orbit.
-    /// A single Rx is not a legal Ising-mode gate; the Python analyzer rejects it.
+    /// Full transverse orbit. Legal only as a spin-flip schedule, not as one site.
     operation ApplyTransverseField(register : Qubit[], angle : Double) : Unit is Adj + Ctl {
         for q in register {
-            Rx(2.0 * angle, q);
+            Axiom_ApplyFlip(q, angle);
         }
     }
 
-    /// Compile-time stand-in. The host must pass false unless the analyzer admitted
-    /// every factor. A lone Z in spin-flip mode, or a lone X in Ising mode, fails here.
     operation RequireAdmitted(admitted : Bool, reason : String) : Unit {
         if not admitted {
             fail $"CPSC rejected the schedule: {reason}";
         }
     }
 
-    /// λ = 0 schedule. Bonds only. Magnetization is a symmetry of this operation.
+    /// λ = 0. Bonds only. Magnetization is the active invariant.
     operation IsingEvolution(register : Qubit[], steps : Int, dt : Double, j : Double) : Unit is Adj + Ctl {
-        RequireAdmitted(true, "ising ring");
+        let schedule = Lemma_BondOrbit(Length(register));
+        RequireAdmitted(Lemma_AllAdmitted(0, schedule), "ising ring");
         for _ in 1 .. steps {
-            ApplyZZRing(register, j * dt);
+            Lemma_Interpret(register, 0, schedule, j * dt);
         }
     }
 
-    /// λ ≠ 0 schedule. Full bond orbit plus full transverse orbit.
-    /// This operation contains no lone Z, so it stays in a prod-X sector.
+    /// λ ≠ 0. Bond orbit plus transverse orbit. ∏ X is the active invariant.
     operation SpinFlipEvolution(
         register : Qubit[],
         steps : Int,
@@ -59,17 +56,45 @@ namespace ConservationPreservingScattering {
         j : Double,
         lam : Double
     ) : Unit is Adj + Ctl {
-        RequireAdmitted(true, "spin-flip orbit");
+        let n = Length(register);
+        let bonds = Lemma_BondOrbit(n);
+        let field = Lemma_TransverseOrbit(n);
+        RequireAdmitted(Lemma_AllAdmitted(1, bonds + field), "spin-flip orbit");
         for _ in 1 .. steps {
-            ApplyZZRing(register, j * dt);
-            ApplyTransverseField(register, lam * dt);
+            Lemma_Interpret(register, 1, bonds, j * dt);
+            Lemma_Interpret(register, 1, field, lam * dt);
         }
     }
 
-    /// Diagnostic, not a compiler filter. Returns the Z-parity of a computational measurement.
+    /// Refused schedule. Present so a host can see the lemma fail closed.
+    operation RejectedIsingFlip(register : Qubit[], site : Int, angle : Double) : Unit is Adj + Ctl {
+        let bad = [TransverseFlip(site)];
+        RequireAdmitted(Lemma_AllAdmitted(0, bad), "single X breaks Ising magnetization");
+        Lemma_Interpret(register, 0, bad, angle);
+    }
+
+    operation RejectedSpinFlipZ(register : Qubit[], site : Int, angle : Double) : Unit is Adj + Ctl {
+        let bad = [LoneZ(site)];
+        RequireAdmitted(Lemma_AllAdmitted(1, bad), "lone Z breaks prod X");
+        Lemma_Interpret(register, 1, bad, angle);
+    }
+
+    /// Diagnostic, not a compiler filter.
     operation MeasureZParity(register : Qubit[]) : Int {
         mutable parity = 0;
         for q in register {
+            if M(q) == One {
+                set parity = (parity + 1) % 2;
+            }
+        }
+        return parity;
+    }
+
+    /// Diagnostic for the spin-flip sector: measure every qubit in X and return the parity.
+    operation MeasureXParity(register : Qubit[]) : Int {
+        mutable parity = 0;
+        for q in register {
+            H(q);
             if M(q) == One {
                 set parity = (parity + 1) % 2;
             }

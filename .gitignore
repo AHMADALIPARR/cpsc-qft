@@ -11,3 +11,5 @@ build/
 lean/CPSC/.lake/
 *.olean
 .DS_Store
+
+lean/.lake/

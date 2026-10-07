@@ -1,0 +1,6 @@
+name = "CPSC"
+version = "0.1.0"
+defaultTargets = ["CPSC"]
+
+[[lean_lib]]
+name = "CPSC"

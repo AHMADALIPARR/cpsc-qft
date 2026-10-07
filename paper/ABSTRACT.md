@@ -1,0 +1,5 @@
+# Abstract
+
+We describe a compilation architecture for lattice scattering in which the symmetries of the target Hamiltonian are constraints on synthesis rather than filters on shots. For the periodic transverse-field Ising model used as the qubit shadow of 1+1D $\phi^4$, the conserved quantities available at compile time are Z-parity and lattice translation. Total magnetization is conserved only in the classical Ising limit. The quartic $\sum_i X_i^4$ is an identity and does not define a channel.
+
+The repository supplies a symmetry analyzer that rejects parity-odd gates before execution, a sector-restricted exponentiation with zero ideal leakage, a Q# stub of the admitted Trotter factors, and a Lean 4 interface for the three proof obligations (commutation, leakage, completeness). Those obligations are not discharged. The construction collides with existing symmetry-sector simulators and verified circuit compilers; the unresolved piece is a certificate bound to a concrete QFT channel so that an edited circuit fails closed.

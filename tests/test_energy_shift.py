@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from cpsc.channel import evolve_in_sector, leakage
 from cpsc.hamiltonian import magnetization_of, parity_of, transverse_ising, x4_identity_shift
@@ -6,11 +7,7 @@ from cpsc.hamiltonian import magnetization_of, parity_of, transverse_ising, x4_i
 
 def test_x4_is_proportional_to_identity():
     # The draft quartic does not open a new scattering channel.
-    assert x4_identity_shift(5, 1.2) == pytest_approx(5 * 1.2 / 24.0)
-
-
-def pytest_approx(value: float) -> float:
-    return value
+    assert x4_identity_shift(5, 1.2) == pytest.approx(5 * 1.2 / 24.0)
 
 
 def test_sector_evolution_has_zero_parity_leakage():
@@ -22,7 +19,7 @@ def test_sector_evolution_has_zero_parity_leakage():
 
 
 def test_magnetization_projection_refused_when_field_is_on():
-    with np.testing.assert_raises(ValueError):
+    with pytest.raises(ValueError):
         evolve_in_sector(3, 0b001, time=0.2, lam=0.3, conserve_magnetization=True)
 
 

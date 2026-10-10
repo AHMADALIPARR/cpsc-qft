@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Lean certificate run. Operator commutation on the qubit space is proved in Lean without axioms (`lean/CPSC/Operator.lean`). The paper is [paper/PAPER.md](paper/PAPER.md) (typeset source forthcoming as PAPER.tex / PAPER.pdf).
+**Status:** prototype with closed operator proof. The analyzer, translation-orbit check, Trotter product, certificate digest, and Lean certificate all run. Operator commutation on the qubit space is **proved** in Lean without project axioms (`lean/CPSC/Operator.lean`): every admitted schedule, Trotterized for any step count, commutes with `∑ Z` (Ising) or `∏ X` (spin-flip) on `(R²)^⊗N` for every lattice size, every commutative ring, and every rotation angle. The paper is [paper/PAPER.md](paper/PAPER.md).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -35,7 +35,8 @@ The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the i
 
 | Quantity | Operator | Status in this repo |
 | --- | --- | --- |
-| Charge $Q$ | $\sum_i Z_i$ (equivalently $\mathbb{Z}_2$ parity $\prod_i Z_i$) | Enforced. $H$ is block-diagonal in $Q$. Single-qubit $X$ is rejected. |
+| Charge $Q$ | $\sum_i Z_i$ (equivalently $\mathbb{Z}_2$ parity $\prod_i Z_i$) | Enforced and proved. Single-qubit $X$ is rejected; admitted schedules commute with $\sum Z$ at $\lambda = 0$. |
+| Spin flip | $\prod_i X_i$ | Enforced and proved for $\lambda \neq 0$. A lone $Z$ is rejected; admitted schedules commute with $\prod X$. |
 | Momentum $P$ | Generator of the cyclic shift $T$ | Specified. Translation averaging is implemented classically for diagonal checks; block synthesis is not. |
 | Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. |
 
@@ -59,8 +60,9 @@ GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.git
 ```
 docs/SPECIFICATION.md     mathematical construction and PCSS workflow
 docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     what is proved and what is still open
+docs/OPEN_PROBLEMS.md     remaining obligations (operator proof is closed)
 lean/CPSC/                Boolean certificate, operator proofs, emitted digest
+lean/Audit.lean           axiom audit (standard Lean axioms only)
 qsharp/                   Ising and spin-flip Trotter operations
 src/cpsc/                 analyzer, compiler, certificate binder
 tests/                    adversarial rejection, orbit check, digest binding
@@ -81,7 +83,7 @@ Python 3.11+. No quantum hardware required. The demo is a statevector check on $
 
 ## Certificate story
 
-`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. Operator commutation for every admitted Trotter schedule is proved in `lean/CPSC/Operator.lean` (see also [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md)). The Python adversarial test rejects illegal gates at compile time. `lake env lean Audit.lean` lists only Lean's standard axioms.
+`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. The operator obligation is closed: `lean/CPSC/Operator.lean` proves that every admitted Trotter schedule commutes with the mode invariant (see also [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md) and `lean/Audit.lean`). The Python adversarial test rejects illegal gates at compile time. Emitted certificates carry `emitted_commutes`.
 
 ## Relation to existing methods
 

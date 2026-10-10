@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Boolean Lean skeleton run. Operator commutation on the qubit space is still open. The paper is [paper/PAPER.md](paper/PAPER.md).
+**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Boolean Lean skeleton run. Operator commutation sketches for every admitted schedule are in [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md). The paper is [paper/PAPER.md](paper/PAPER.md).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -59,12 +59,13 @@ GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.git
 ```
 docs/SPECIFICATION.md     mathematical construction and PCSS workflow
 docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     discharged skeleton vs open operator proof
+docs/OPEN_PROBLEMS.md     discharged skeleton vs remaining obligations
 lean/CPSC/                Boolean certificate, plus an emitted digest
 qsharp/                   Ising and spin-flip Trotter operations
 src/cpsc/                 analyzer, compiler, certificate binder
 tests/                    adversarial rejection, orbit check, digest binding
 paper/PAPER.md            working paper
+paper/OPERATOR_PROOFS.md  Appendix A operator proof sketches
 ```
 
 ## Run the analyzer
@@ -80,13 +81,7 @@ Python 3.11+. No quantum hardware required. The demo is a statevector check on $
 
 ## Certificate story
 
-`lean/CPSC/Certificate.lean` defines the statements that a later proof must discharge:
-
-1. Every gate in the compiled circuit commutes with $Q$ and with the translation generator.
-2. In the absence of decoherence, amplitude outside the input sector is identically zero.
-3. If $[H, \Pi_\chi] = 0$, the exact evolution lies in $\mathcal{M}_{\mathrm{sym}}$ (completeness). Projection is then a no-op on the ideal operator and a rejection rule on illegal gates.
-
-These are `sorry`s. A modified circuit does not yet break a machine-checked proof, because the proof does not exist. The Python adversarial test is the executable stand-in: inserting an $X$ fails compilation.
+`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. Operator commutation for admitted schedules is proved in the sketches of [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md). The Python adversarial test rejects illegal gates at compile time.
 
 ## Relation to existing methods
 

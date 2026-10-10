@@ -1,0 +1,459 @@
+% Copyright (c) 2026 Ahmad Ali Parr and others.
+% SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
+%
+% Build: latexmk -xelatex PAPER.tex   (lualatex also works)
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amsthm}
+\usepackage{unicode-math}
+\setmainfont{Latin Modern Roman}
+\setmathfont{Latin Modern Math}
+\setmonofont{DejaVu Sans Mono}[Scale=0.82]
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlength{\emergencystretch}{2em}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{xcolor}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\newcommand{\lean}[1]{\texttt{#1}}
+\newcommand{\leanref}[1]{\par\smallskip\noindent{\small\textit{Lean:} \lean{#1}}}
+\newcommand{\PiX}{\Pi_X}
+\newcommand{\Mag}{M}
+\newcommand{\sgn}{\operatorname{sgn}}
+
+\fvset{fontsize=\small,frame=single,framesep=2mm,rulecolor=\color{black!30}}
+
+\title{Conservation-Preserving Compilation for a 1+1D Lattice Shadow of $\phi^4$}
+\author{Ahmad Ali Parr}
+\date{10 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We implement a compilation architecture for lattice scattering in which the symmetries of the target Hamiltonian constrain circuit synthesis rather than filter measured shots. The working model is the periodic transverse-field Ising chain, the qubit shadow of 1+1D $\phi^4$, not continuum $\phi^4$.
+
+Two facts fix the compiler. The quartic written as $\sum_i X_i^4$ is a multiple of the identity. Z-parity is a symmetry only at $\lambda = 0$; for $\lambda \neq 0$ the conserved operator is the global spin flip $\prod_i X_i$.
+
+The repository supplies a symmetry analyzer, a translation-orbit check, a first-order Trotter product of admitted gates, a Q\# emission of those factors, and a certificate whose SHA-256 digest is bound to the gate list. On a 4-site chain the Ising schedule has Z-parity leakage 0, and the spin-flip schedule has $\prod X$ leakage 0 within roundoff. Inserting a forbidden gate fails compilation. A Lean development proves, without project axioms, that every admitted Trotter schedule commutes with the conserved operator on $(\mathbb{C}^2)^{\otimes N}$ for every lattice size and every angle.
+
+This paper describes what the code does. It proves operator commutation in Lean for every admitted schedule. It does not claim a continuum scattering amplitude.
+\end{abstract}
+
+\section{Introduction}
+
+NISQ scattering experiments typically evolve a Trotter circuit and then discard shots whose measured quantum numbers disagree with the input state. Post-selection of this kind is a diagnostic. It does not make the illegal amplitude unavailable to the device, and it gives a later hardware rewrite no reason to refuse a gate.
+
+The Conservation-Preserving Scattering Compiler (CPSC) inverts that order. A schedule is emitted only if every factor preserves the active symmetry and the gate support is closed under lattice translation. The emitted artifact carries a digest of the schedule, so changing any gate changes the digest and the edited circuit no longer matches its certificate.
+
+The target is not continuum $\phi^4$, for which Jordan, Lee, and Preskill gave the first quantum scattering algorithm~\cite{jlp2012,jlp2014}. It is the periodic transverse-field Ising model (TFIM) on $N$ qubits, with indices taken mod $N$:
+\begin{equation}
+  H = -J \sum_{i=0}^{N-1} Z_i Z_{i+1} + \lambda \sum_{i=0}^{N-1} X_i .
+  \label{eq:H}
+\end{equation}
+The original draft also carried a quartic term $(g/24)\sum_i X_i^4$. Because $X^2 = I$ for a Pauli operator, this term is a constant:
+\begin{equation}
+  \frac{g}{24}\sum_{i=0}^{N-1} X_i^4 = \frac{gN}{24}\, I .
+\end{equation}
+It shifts the zero of energy and opens no scattering channel. The implementation records the shift and drops it. A genuine $\phi^4$ interaction requires a truncated-oscillator encoding with more than one qubit per site, which is left to future work (Section~\ref{sec:open}).
+
+\paragraph{Contributions.}
+(i) A correct identification of the conserved operator in each coupling regime, with a compile-time mode switch at $\lambda = 0$.
+(ii) A synthesis path that admits only symmetry-preserving, translation-closed factors and has no post-selection step.
+(iii) A SHA-256 certificate bound to the admitted schedule, rendered as a Lean fragment that carries a machine-checked operator commutation theorem (Appendix~\ref{app:proofs}).
+(iv) A Q\# emission whose operations are the hardware image of the admitted factors.
+
+\section{Which operator is actually conserved}
+\label{sec:symmetry}
+
+The conserved operator depends on $\lambda$: total Z-magnetization at $\lambda = 0$, and the global spin flip $\PiX$ for $\lambda \neq 0$. The draft listed $\Pi_Q = \sum_i Z_i$ as a symmetry of the interacting theory, which is false once $\lambda \neq 0$.
+
+\subsection{Magnetization fails at \texorpdfstring{$\lambda \neq 0$}{lambda != 0}}
+
+A single $X_j$ anticommutes with $Z_j$ and commutes with every other $Z_i$. Acting on a computational basis state it flips one spin and changes the magnetization by $\pm 2$:
+\begin{equation}
+  \Bigl[X_j, \sum_i Z_i\Bigr] = [X_j, Z_j] = -2i\,Y_j \neq 0 .
+\end{equation}
+It also anticommutes with the Z-parity $\prod_i Z_i$. The transverse field is a sum of such terms, so neither magnetization nor Z-parity commutes with $H$ when $\lambda \neq 0$.
+
+\subsection{The spin flip is conserved for all \texorpdfstring{$\lambda$}{lambda}}
+
+The operator that commutes with both the bonds and the field is
+\begin{equation}
+  \PiX = \prod_{i=0}^{N-1} X_i .
+\end{equation}
+Conjugation by $\PiX$ sends each $Z_i$ to $-Z_i$. A bond $Z_a Z_b$ picks up two minus signs and is invariant. Each $X_i$ commutes with $\PiX$ trivially. A lone $Z_i$ picks up one sign and anticommutes. Hence $[H, \PiX] = 0$ for every $J$ and $\lambda$.
+
+\subsection{Translation and energy}
+
+Translation $T\colon i \mapsto i + 1 \bmod N$ is a symmetry because the couplings are uniform and the lattice is periodic. Energy is not a separate compilation constraint: a time-independent $H$ already satisfies $[H, H] = 0$. A first-order Trotter product does not conserve $H$ exactly, so filtering on $\langle H \rangle$ after a step measures Trotter error, not a conservation-law violation.
+
+\subsection{Two compilation modes}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Mode & Condition & Conserved operator & Admitted & Rejected \\
+\midrule
+Ising & $\lambda = 0$ & $\sum_i Z_i$ (and $\prod_i Z_i$) & ZZ ring, lone Z & single X \\
+Spin-flip & $\lambda \neq 0$ & $\PiX = \prod_i X_i$ & ZZ ring, full X orbit & lone Z \\
+\bottomrule
+\end{tabular}
+\caption{Admission rule per mode.}
+\label{tab:modes}
+\end{table}
+
+In both modes a schedule must also be a union of cyclic images. One bond is not a translation-invariant interaction; the ring $\{Z_0Z_1, Z_1Z_2, \dots, Z_{N-1}Z_0\}$ is.
+
+\section{Compiler}
+
+\lean{compile\_scattering} either emits a certified Trotter schedule or raises \lean{CompilationRejected}; there is no third outcome. It runs five steps:
+\begin{enumerate}[nosep]
+  \item Choose the mode from $\lambda$: Ising if $\lambda = 0$, spin-flip otherwise.
+  \item Check each requested gate against the mode's admission rule (Table~\ref{tab:modes}). Any forbidden gate raises \lean{CompilationRejected}.
+  \item Reject any support that is not closed under the cyclic shift $i \mapsto i + 1 \bmod N$.
+  \item Build a first-order Trotter product of the admitted local terms.
+  \item Bind a certificate to the admitted list, the mode, and the Trotter parameters (Section~\ref{sec:cert}).
+\end{enumerate}
+
+\subsection{Trotter factors}
+
+With $n$ steps of size $dt = t/n$, the emitted unitary is
+\begin{equation}
+  U(t) \approx \Bigl[\, \prod_{\langle a,b\rangle} e^{\,iJ\,dt\,Z_aZ_b} \prod_j e^{-i\lambda\,dt\,X_j} \Bigr]^{n} .
+\end{equation}
+ZZ gates apply $\exp(iJ\,dt\,Z_aZ_b)$, matching the $-J$ sign in $H$. X gates apply $\exp(-i\lambda\,dt\,X)$. A lone Z, when admitted in Ising mode, is a spectator: it carries no coupling in $H$ and does not evolve the state.
+
+Every factor commutes with the active symmetry, so the product does too. This is why the Trotter error described in Section~\ref{sec:symmetry} cannot leak amplitude out of the symmetry sector, even though it does perturb the energy. Theorem~\ref{thm:main} makes this statement exact and machine-checked.
+
+\subsection{Input sectors}
+
+In Ising mode the input is a computational basis state $|b\rangle$, which is an eigenstate of $\sum_i Z_i$. In spin-flip mode a raw basis state is not an eigenstate of $\PiX$, so it carries the wrong sector label. The input is instead the even cat state, a $+1$ eigenstate of $\PiX$:
+\begin{equation}
+  |\psi_0\rangle = \tfrac{1}{\sqrt2}\bigl(|b\rangle + |\bar b\rangle\bigr), \qquad \PiX|\psi_0\rangle = +|\psi_0\rangle ,
+\end{equation}
+where $\bar b$ is the bitwise complement of $b$.
+
+\subsection{No post-selection}
+
+The compiler has no post-selection step. Leakage out of the sector is computed only as a check that the emitted product stayed where synthesis put it.
+
+\section{Certificate}
+\label{sec:cert}
+
+The certificate is the SHA-256 digest of a canonical JSON payload that fixes the whole schedule. The payload contains the gate names, supports, and kinds; the mode; and $N$, $\lambda$, $J$, total time, and step count. Any edit to these fields changes the digest.
+
+The same payload is rendered as a Lean fragment. For the 4-site Ising ring the compiler emits:
+\begin{Verbatim}
+def emittedHash : String :=
+  "e92f82910385ae3c46acc5479d57f4c6357cbbf9bf77d668e469a64b281db8e5"
+def emittedGates : List GateKind := [.zz 0 1, .zz 1 2, .zz 2 3, .zz 3 0]
+theorem emitted_admitted :
+    allPreserve preservesMagnetization emittedGates = true := by
+  rfl
+theorem emitted_commutes {R : Type} [Lean.Grind.CommRing R] {n : Nat}
+    (ι : R) (ang : Operator.Angles R) (steps : Nat) :
+    Operator.Commutes (Operator.trotterOp (n := n) ι ang emittedGates steps)
+      (Operator.invariant .ising) :=
+  Operator.admitted_trotter_commutes .ising ι ang emittedGates
+    emitted_admitted steps
+\end{Verbatim}
+\lean{emitted\_admitted} is the Boolean admission check, discharged by reduction; \lean{rfl} fails if a forbidden constructor is inserted. \lean{emitted\_commutes} is the operator statement for the same gate list: every Trotter power of the emitted schedule commutes with the mode's conserved operator. The fragment is checked in \lean{lean/CPSC/Emitted.lean}.
+
+\paragraph{Operator commutation.}
+The file \lean{lean/CPSC/Operator.lean} lifts the Boolean check to operators. A state on $N$ qubits is a map from basis strings to a commutative ring $R$, so $R = \mathbb{C}$ gives $(\mathbb{C}^2)^{\otimes N}$, and operator product is composition. Each gate is written $c\,I + \iota s\,P$ for its Pauli generator $P$; since $P^2 = I$, this is $\exp(i\theta P)$ with $c = \cos\theta$ and $s = \sin\theta$. The file proves that every schedule the analyzer admits, repeated for any number of Trotter steps, commutes with $\sum_i Z_i$ in Ising mode and with $\PiX$ in spin-flip mode (Theorem~\ref{thm:main}). The result holds for every lattice size, ring, and angle, and its only axioms are Lean's standard \lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}. It also proves that rejection is not vacuous: when $\sin\theta \neq 0$, a transverse rotation moves magnetization and a lone Z rotation breaks $\PiX$ (Proposition~\ref{prop:neg}). The proofs are written out in Appendix~\ref{app:proofs} and the Lean development is mapped in Appendix~\ref{app:lean}.
+
+\section{Q\# emission}
+
+\lean{qsharp/ConservationPreservingScattering.qs} is the hardware image of the admitted factors, not a second analyzer. Its operations map one-to-one onto the compiler's output (Table~\ref{tab:qsharp}). Admission is decided once, on the host. The Q\# layer re-asserts that decision through \lean{RequireAdmitted} rather than re-deriving it.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+Operation & Role \\
+\midrule
+\lean{ApplyZZRing} & The full bond orbit under translation \\
+\lean{ApplyTransverseField} & The full X orbit; used only by the spin-flip schedule \\
+\lean{IsingEvolution} & Trotter loop for Ising mode \\
+\lean{SpinFlipEvolution} & Trotter loop for spin-flip mode \\
+\lean{RequireAdmitted} & Fails if the host passes a schedule the analyzer refused \\
+\lean{MeasureZParity} & Diagnostic only; it is not the compiler \\
+\bottomrule
+\end{tabular}
+\caption{Q\# operations.}
+\label{tab:qsharp}
+\end{table}
+
+\section{Checks}
+
+All six numerical checks pass: both legal schedules show zero sector leakage, and all three illegal schedules are rejected at compile time (Table~\ref{tab:checks}). Figures come from the statevector prototype with $N = 4$, $J = 1$, $t = 0.4$, and eight Trotter steps. The \lean{pytest} suite reports 14 passed.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llllL{5.6cm}@{}}
+\toprule
+Case & Mode & Seed & $\lambda$ & Observed \\
+\midrule
+ZZ ring & Ising & \lean{0b0011} & 0 & Emitted; Z-parity leakage 0; certificate matches the ring, not the ring with \lean{X[0]} substituted \\
+ZZ ring + \lean{X[2]} & Ising & -- & 0 & Rejected: odd X support changes Z-parity \\
+Single bond & Ising & -- & 0 & Rejected: translation orbit not closed \\
+ZZ ring + X orbit & Spin-flip & \lean{0b0001} & 0.5 & Emitted; $\prod X$ leakage 0 (roundoff $3.6\times10^{-15}$ clamped) \\
+Spin-flip + \lean{Z[1]} & Spin-flip & -- & 0.5 & Rejected: lone Z anticommutes with $\prod X$ \\
+Dropped quartic & -- & -- & -- & $Ng/24 = 0.1667$ at $g = 1$, on the identity \\
+\bottomrule
+\end{tabular}
+\caption{Numerical checks.}
+\label{tab:checks}
+\end{table}
+
+The Lean side is checked the same way. \lean{lake build} succeeds on Lean 4.22.0 with no external dependencies. \lean{lake env lean Audit.lean} prints the axioms each main theorem depends on; every one lists only \lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}, and the sources contain no \lean{axiom}, \lean{sorry}, or \lean{native\_decide}. Inserting \lean{.transverseFlip 2} into the emitted Ising gate list makes \lean{emitted\_admitted} fail to compile, so the operator theorem cannot be stated for a tampered schedule.
+
+These checks are noiseless. Ideal zero leakage does not survive decoherence on hardware, and the certificate makes no claim that it does.
+
+\section{What is not proved}
+\label{sec:open}
+
+Operator commutation is closed (Section~\ref{sec:cert}, Appendix~\ref{app:proofs}). Four obligations remain open:
+\begin{itemize}[nosep]
+  \item \emph{Instantiation at $\mathbb{C}$.} The proof is over an arbitrary commutative ring with gates written as $c\,I + \iota s\,P$. Connecting it to Mathlib's complex numbers and matrix exponential, so that $\exp(i\theta P) = \cos\theta\, I + i\sin\theta\, P$ is itself machine-checked, is not done.
+  \item A noise bound relating device error rates to sector leakage.
+  \item A truncated-oscillator encoding of genuine $\phi^4$, where the quartic is not an identity.
+  \item A Lean checker wired into CI, so every emitted certificate is checked on commit.
+\end{itemize}
+
+Completeness holds inside each mode by construction of $H$. The Ising limit conserves magnetization, and the transverse-field model conserves $\PiX$. Projecting onto a magnetization sector at $\lambda \neq 0$ is refused, because that projection would discard part of the true evolution.
+
+The general construction overlaps with symmetry-sector simulators and with verified circuit compilers. What is specific here is the admission rule for this lattice shadow, the mode switch at $\lambda = 0$, and the digest bound to an admitted schedule whose operator semantics is proved.
+
+\section{Related work}
+
+Block-diagonalization of a Hamiltonian by a conserved charge is standard in exact diagonalization and tensor-network methods. Symmetry verification and post-selection~\cite{bonetmonroig2018,sagastizabal2019} are the error-mitigation approach this compiler declines to substitute for synthesis. Subspace-preserving evolution in existing quantum toolkits already builds a sector unitary once a symmetry is declared; CPSC differs in deriving which symmetry is valid from $\lambda$ and in refusing the wrong one.
+
+Machine-checked circuit semantics exist in other verification stacks, such as the Coq-verified VOQC optimizer~\cite{voqc}, but they do not encode this Hamiltonian or its admission rule. Formalization of free bosonic quantum field theory in Lean~\cite{douglas2026} targets continuum Euclidean axioms, not a lattice scattering schedule. The development here uses Lean~4~\cite{lean4} without Mathlib.
+
+Wave-packet scattering is the closest experimental neighbor. Zemlevskiy simulated two-particle wave-packet scattering in 1+1D scalar field theory on 120 qubits of IBM's Heron processor, the first such simulation in an interacting field theory, using symmetry- and locality-informed variational circuits~\cite{zemlevskiy2024}. For the Ising chain itself, Bennewitz et al.\ proposed preparing and colliding Gaussian meson wave packets on spin quantum simulators~\cite{bennewitz2024}, and Hite gave a simplified fermionic wave-packet preparation for the transverse-field Ising model, tested on IonQ hardware~\cite{hite2025}. CPSC currently uses basis and cat-state inputs; admitting wave-packet preparation circuits under the same certificate is a natural extension.
+
+\section{Conclusion}
+
+For the periodic transverse-field Ising chain, conservation can be enforced at synthesis rather than by discarding shots. The correct symmetry is Z-magnetization at $\lambda = 0$ and the global spin flip $\PiX$ for $\lambda \neq 0$; the draft's quartic term is a constant and is dropped. On a 4-site ring, legal schedules show zero ideal leakage, illegal ones fail to compile, and each emitted schedule carries a digest that breaks under edits. Operator commutation is proved in Lean for every admitted schedule; the next steps are a noise bound and a genuine $\phi^4$ encoding.
+
+\paragraph{AI assistance.}
+Drafting, editing, and the Lean operator development were assisted by Claude (Anthropic). The author reviewed the text; all Lean proofs are checked by the Lean kernel, and all numerical results come from the repository's test suite.
+
+\paragraph{Code and license.}
+Source: \url{https://github.com/AHMADALIPARR/cpsc-qft}. Dual strict copyleft: \lean{LicenseRef-CPSC-ESCL-1.0} OR \lean{AGPL-3.0-only}. Copyright \copyright\ 2026 Ahmad Ali Parr and others.
+
+\appendix
+
+\section{Operator proofs}
+\label{app:proofs}
+
+This appendix gives the mathematical argument that \lean{lean/CPSC/Operator.lean} checks. Each result names the Lean theorem that proves it. The proofs are elementary; the point of the formalization is that the Boolean admission predicate the compiler uses is now tied, by a kernel-checked proof, to the operator it is meant to approximate.
+
+\subsection{Setting}
+
+Fix a lattice of $N = n + 1 \ge 1$ sites and a commutative ring $R$. A \emph{basis string} is a map $b\colon \{0,\dots,N-1\} \to \{0,1\}$. A \emph{state} is a map $v$ from basis strings to $R$; for $R = \mathbb{C}$ the states form $(\mathbb{C}^2)^{\otimes N}$ in the computational basis. An \emph{operator} is a map on states, and the product $AB$ is composition. Operators $A$ and $P$ \emph{commute} if $A(Pv) = P(Av)$ for every state $v$ (\lean{Commutes}).
+
+Write $\sgn(x) = (-1)^x \in R$ for a bit $x$, $b^{(q)}$ for $b$ with bit $q$ flipped (\lean{flipAt}), and $\bar b$ for $b$ with every bit flipped (\lean{flipAll}). The operators are
+\begin{align*}
+  (Z_q v)(b) &= \sgn(b_q)\, v(b), &
+  (X_q v)(b) &= v(b^{(q)}), \\
+  (\PiX v)(b) &= v(\bar b), &
+  (\Mag v)(b) &= m(b)\, v(b), \quad m(b) = \textstyle\sum_k \sgn(b_k).
+\end{align*}
+These are the standard actions of $Z_q$, $X_q$, $\prod_k X_k$, and $\sum_k Z_k$ on computational basis states. Fix an element $\iota \in R$ and coefficients $c, s \in R$. The gates are
+\begin{align*}
+  \mathrm{RZZ}_{pq}(v)(b) &= \bigl(c + \iota s\, \sgn(b_p)\sgn(b_q)\bigr)\, v(b), &
+  \mathrm{RX}_q(v)(b) &= c\, v(b) - \iota s\, v(b^{(q)}), \\
+  \mathrm{RZ}_q(v)(b) &= \bigl(c + \iota s\, \sgn(b_q)\bigr)\, v(b), &
+  \mathrm{PAIR}_{pq} &= \mathrm{RX}_p\, \mathrm{RX}_q .
+\end{align*}
+These are exactly the factors applied by \lean{cpsc.channel}.
+
+\subsection{Gates are rotations}
+
+\begin{lemma}[Pauli squares]
+$Z_q^2 = I$, $X_q^2 = I$, and $\sgn(\bar x) = -\sgn(x)$, $\sgn(x)^2 = 1$.
+\leanref{Z\_sq, X\_sq, sgn\_not, sgn\_sq}
+\end{lemma}
+\begin{proof}
+$\sgn$ takes values $\pm1$ and flipping a bit swaps them. Flipping bit $q$ twice returns $b$.
+\end{proof}
+
+\begin{proposition}[Gate form]
+\label{prop:form}
+$\mathrm{RZZ}_{pq} = c\,I + \iota s\, Z_pZ_q$, $\mathrm{RX}_q = c\,I - \iota s\, X_q$, and $\mathrm{RZ}_q = c\,I + \iota s\, Z_q$. If $\iota^2 = -1$ and $c^2 + s^2 = 1$, the gate with $s$ replaced by $-s$ inverts $\mathrm{RX}_q$.
+\leanref{rzz\_eq, rx\_eq, rz\_eq, rx\_inverse}
+\end{proposition}
+\begin{proof}
+The first three identities follow by evaluating both sides at a basis string. For the inverse,
+\[
+  (c\,I + \iota s X_q)(c\,I - \iota s X_q) = c^2 I - \iota^2 s^2 X_q^2 = (c^2 + s^2)\, I = I .
+\]
+\end{proof}
+
+Over $R = \mathbb{C}$ with $\iota = i$, $c = \cos\theta$, $s = \sin\theta$: since $P^2 = I$ for each generator, the power series gives $\exp(\pm i\theta P) = \cos\theta\, I \pm i \sin\theta\, P$. So the gates are the rotations $e^{i\theta Z_pZ_q}$, $e^{-i\theta X_q}$, and $e^{i\theta Z_q}$. This last identification is the one step not formalized (Section~\ref{sec:open}).
+
+\subsection{Commutation is closed under products}
+
+\begin{lemma}
+\label{lem:comp}
+The identity commutes with every $P$. If $A$ and $B$ commute with $P$, so does $AB$.
+\leanref{commutes\_id, commutes\_comp}
+\end{lemma}
+\begin{proof}
+$A(B(Pv)) = A(P(Bv)) = P(A(Bv))$.
+\end{proof}
+
+\subsection{Admitted gates commute with the invariant}
+
+\begin{lemma}
+$\overline{b^{(q)}} = \bar b^{(q)}$: flipping one bit commutes with flipping all bits.
+\leanref{flipAt\_flipAll}
+\end{lemma}
+
+\begin{proposition}[Spin flip]
+\label{prop:spin}
+$\mathrm{RZZ}_{pq}$, $\mathrm{RX}_q$, and $\mathrm{PAIR}_{pq}$ commute with $\PiX$, for all $c, s, \iota$.
+\leanref{rzz\_comm\_PiX, rx\_comm\_PiX, pair\_comm\_PiX}
+\end{proposition}
+\begin{proof}
+For RZZ, both $(\mathrm{RZZ}\,\PiX v)(b)$ and $(\PiX\,\mathrm{RZZ}\, v)(b)$ equal a coefficient times $v(\bar b)$. The coefficients are $c + \iota s\,\sgn(b_p)\sgn(b_q)$ and $c + \iota s\,\sgn(\bar b_p)\sgn(\bar b_q)$, and these agree because the two sign changes cancel. For RX,
+\[
+  (\mathrm{RX}_q \PiX v)(b) = c\,v(\bar b) - \iota s\, v(\overline{b^{(q)}}), \qquad
+  (\PiX \mathrm{RX}_q v)(b) = c\,v(\bar b) - \iota s\, v(\bar b^{(q)}),
+\]
+which agree by the preceding lemma. PAIR follows by Lemma~\ref{lem:comp}.
+\end{proof}
+
+\begin{proposition}[Magnetization]
+\label{prop:mag}
+$\mathrm{RZZ}_{pq}$ and $\mathrm{RZ}_q$ commute with $\Mag$, for all $c, s, \iota$.
+\leanref{diag\_comm\_Mag, rzz\_comm\_Mag, rz\_comm\_Mag}
+\end{proposition}
+\begin{proof}
+All three are diagonal: each multiplies $v(b)$ by a function of $b$. Diagonal operators commute because $R$ is commutative.
+\end{proof}
+
+\subsection{Rejection is not vacuous}
+
+\begin{lemma}
+\label{lem:magflip}
+$m(b^{(q)}) = m(b) + \sgn(\bar b_q) - \sgn(b_q) = m(b) - 2\sgn(b_q)$.
+\leanref{magUpTo\_flipAt, magVal\_flipAt}
+\end{lemma}
+\begin{proof}
+Only the $q$-th term of the sum changes. Lean proves the statement for every partial sum $\sum_{k<m}$ by induction on $m$.
+\end{proof}
+
+\begin{proposition}
+\label{prop:neg}
+If $2\iota s \neq 0$ (over $\mathbb{C}$: $\sin\theta \neq 0$), then $\mathrm{RX}_q$ does not commute with $\Mag$ and $\mathrm{RZ}_q$ does not commute with $\PiX$.
+\leanref{rx\_not\_comm\_Mag, rz\_not\_comm\_PiX}
+\end{proposition}
+\begin{proof}
+Take $v \equiv 1$ and evaluate at the all-zero string $0$. By Lemma~\ref{lem:magflip}, $m(0^{(q)}) = m(0) - 2$, so
+\[
+  (\Mag\,\mathrm{RX}_q v)(0) - (\mathrm{RX}_q \Mag v)(0) = m(0)(c - \iota s) - \bigl(c\,m(0) - \iota s\,(m(0) - 2)\bigr) = -2\iota s \neq 0 .
+\]
+For RZ, $(\mathrm{RZ}_q \PiX v)(0) = c + \iota s$ while $(\PiX\, \mathrm{RZ}_q v)(0) = c + \iota s\,\sgn(1) = c - \iota s$. They differ by $2\iota s \neq 0$.
+\end{proof}
+
+The hypothesis is necessary. At $\theta = 0$ or $\theta = \pi$ the rotation is $\pm I$, which commutes with everything. An earlier axiomatization asserted these non-commutations unconditionally, and also that a forbidden factor cannot be cancelled by a later one; both are false for real unitaries (take the inverse rotation), and both have been removed.
+
+\subsection{Main theorem}
+
+Gate kinds carry natural-number indices, read modulo $N$ to match the periodic ring (\lean{site}). An angle map assigns $(c, s)$ to each gate kind; for a Trotter step, ZZ gates use $\theta = J\,dt$ and transverse gates use $\theta = \lambda\, dt$. \lean{gateOp} sends each gate kind to its operator, \lean{circuitOp} composes a gate list with the head gate acting first, and \lean{trotterOp} repeats the layer a given number of times.
+
+\begin{theorem}[Admitted schedules conserve the invariant]
+\label{thm:main}
+Let the mode be Ising or spin-flip, with invariant $\Mag$ or $\PiX$ respectively. For every lattice size, commutative ring $R$, $\iota \in R$, angle map, gate list admitted by the analyzer in that mode, and number of Trotter steps $k$, the operator $\bigl(\prod_{g} \mathrm{gateOp}(g)\bigr)^k$ commutes with the invariant.
+\leanref{admitted\_trotter\_commutes}
+\end{theorem}
+\begin{proof}
+Admission means every gate passes the mode's Boolean predicate. By case analysis on the gate kind, a gate passing \lean{preservesMagnetization} is RZZ or RZ, which commutes with $\Mag$ by Proposition~\ref{prop:mag}. A gate passing \lean{preservesSpinFlip} is RZZ, RX, or PAIR, which commutes with $\PiX$ by Proposition~\ref{prop:spin} (\lean{mag\_of\_bool}, \lean{spin\_of\_bool}). Induction on the list with Lemma~\ref{lem:comp} gives the layer (\lean{circuit\_comm}), and induction on $k$ gives the Trotter power (\lean{trotter\_comm}).
+\end{proof}
+
+\begin{corollary}[Sector preservation]
+If $\mathcal{P}\psi_0 = \mu\psi_0$ for the invariant $\mathcal{P}$, then $\mathcal{P}U\psi_0 = \mu U\psi_0$ for the emitted Trotter operator $U$. In particular the even cat state stays in the $+1$ sector of $\PiX$, and a basis state stays in its magnetization sector, at every step.
+\end{corollary}
+\begin{proof}
+$\mathcal{P}U\psi_0 = U\mathcal{P}\psi_0 = \mu U\psi_0$, using linearity of $U$.
+\end{proof}
+The corollary is the mathematical content of the zero-leakage rows in Table~\ref{tab:checks}; the numerical runs confirm it up to floating-point roundoff.
+
+\section{Lean development}
+\label{app:lean}
+
+The development builds with \lean{lake build} on Lean 4.22.0 and has no dependencies beyond the Lean core library. Ring identities are discharged by the core \lean{grind} tactic.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lL{10.4cm}@{}}
+\toprule
+File & Contents \\
+\midrule
+\lean{CPSC/Certificate.lean} & Gate kinds, modes, Boolean admission predicates, the 4-site rings, and adversarial rejections, all by \lean{rfl}. \\
+\lean{CPSC/Operator.lean} & The operator model, gate forms, commutation and non-commutation results, \lean{gateOp}, \lean{circuitOp}, \lean{trotterOp}, and Theorem~\ref{thm:main}. \\
+\lean{CPSC/Lemmas.lean} & \lean{OperatorCommutation} (the former open obligation, now a theorem), \lean{completeness\_of\_admitted}, and gate-kind forms of Proposition~\ref{prop:neg}. \\
+\lean{CPSC/Emitted.lean} & The certificate emitted for the 4-site Ising ring, with \lean{emitted\_commutes}. \\
+\lean{Audit.lean} & \lean{\#print axioms} for the main results. \\
+\bottomrule
+\end{tabular}
+\caption{Lean files.}
+\end{table}
+
+The central statement, as checked:
+\begin{Verbatim}
+theorem admitted_trotter_commutes (mode : CPSC.Mode) (ι : R) (ang : Angles R)
+    (gs : List CPSC.GateKind) (h : CPSC.admitted mode gs = true) (steps : Nat) :
+    Commutes (trotterOp (n := n) ι ang gs steps) (invariant mode)
+\end{Verbatim}
+The audit output:
+\begin{Verbatim}
+'CPSC.Operator.admitted_trotter_commutes' depends on axioms:
+    [propext, Classical.choice, Quot.sound]
+'CPSC.operator_commutation' depends on axioms:
+    [propext, Classical.choice, Quot.sound]
+'CPSC.Emitted.emitted_commutes' depends on axioms:
+    [propext, Classical.choice, Quot.sound]
+\end{Verbatim}
+To reproduce:
+\begin{Verbatim}
+cd lean && lake build && lake env lean Audit.lean
+PYTHONPATH=src python3 -m pytest -q
+\end{Verbatim}
+
+\begin{thebibliography}{10}
+\bibitem{jlp2012} S.~P. Jordan, K.~S.~M. Lee, J.~Preskill. Quantum algorithms for quantum field theories. \emph{Science} 336, 1130--1133 (2012). \href{https://arxiv.org/abs/1111.3633}{arXiv:1111.3633}.
+\bibitem{jlp2014} S.~P. Jordan, K.~S.~M. Lee, J.~Preskill. Quantum computation of scattering in scalar quantum field theories. \href{https://arxiv.org/abs/1112.4833}{arXiv:1112.4833}.
+\bibitem{bonetmonroig2018} X.~Bonet-Monroig, R.~Sagastizabal, M.~Singh, T.~E. O'Brien. Low-cost error mitigation by symmetry verification. \emph{Phys. Rev. A} 98, 062339 (2018). \href{https://arxiv.org/abs/1807.10050}{arXiv:1807.10050}.
+\bibitem{sagastizabal2019} R.~Sagastizabal, X.~Bonet-Monroig, M.~Singh, et al. Experimental error mitigation via symmetry verification in a variational quantum eigensolver. \emph{Phys. Rev. A} 100, 010302 (2019).
+\bibitem{voqc} K.~Hietala, R.~Rand, S.-H. Hung, X.~Wu, M.~Hicks. A verified optimizer for quantum circuits. \emph{Proc. ACM Program. Lang.} 5 (POPL) (2021). \href{https://arxiv.org/abs/1912.02250}{arXiv:1912.02250}.
+\bibitem{douglas2026} M.~R. Douglas, S.~Hoback, A.~Mei, R.~Nissim. Formalization of QFT. \href{https://arxiv.org/abs/2603.15770}{arXiv:2603.15770} (2026).
+\bibitem{zemlevskiy2024} N.~A. Zemlevskiy. Scalable quantum simulations of scattering in scalar field theory on 120 qubits. \href{https://arxiv.org/abs/2411.02486}{arXiv:2411.02486}.
+\bibitem{bennewitz2024} E.~R. Bennewitz et al. Simulating meson scattering on spin quantum simulators. \href{https://arxiv.org/abs/2403.07061}{arXiv:2403.07061}.
+\bibitem{hite2025} M.~Hite. Simplified fermionic scattering state preparation for the NISQ era. \href{https://arxiv.org/abs/2505.00476}{arXiv:2505.00476} (2025).
+\bibitem{lean4} L.~de Moura, S.~Ullrich. The Lean 4 theorem prover and programming language. In \emph{CADE-28}, LNCS 12699 (2021).
+\end{thebibliography}
+
+\end{document}

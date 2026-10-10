@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** prototype with closed operator proof. The analyzer, translation-orbit check, Trotter product, certificate digest, and Lean certificate all run. Operator commutation on the qubit space is **proved** in Lean without project axioms (`lean/CPSC/Operator.lean`): every admitted schedule, Trotterized for any step count, commutes with `∑ Z` (Ising) or `∏ X` (spin-flip) on `(R²)^⊗N` for every lattice size, every commutative ring, and every rotation angle. The paper is [paper/PAPER.md](paper/PAPER.md).
+**Status:** operator commutation closed. Every schedule the analyzer admits, Trotterized for any number of steps, commutes as an operator on `(R²)^⊗N` with the conserved operator of its mode (`∑ Z` at λ = 0, `∏ X` for λ ≠ 0). The proof is in `lean/CPSC/Operator.lean` and uses no project axioms. Analyzer, orbit check, Trotter product, digest binding, and Q# emission all run. Paper: [paper/PAPER.md](paper/PAPER.md).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -35,12 +35,10 @@ The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the i
 
 | Quantity | Operator | Status in this repo |
 | --- | --- | --- |
-| Charge $Q$ | $\sum_i Z_i$ (equivalently $\mathbb{Z}_2$ parity $\prod_i Z_i$) | Enforced and proved. Single-qubit $X$ is rejected; admitted schedules commute with $\sum Z$ at $\lambda = 0$. |
-| Spin flip | $\prod_i X_i$ | Enforced and proved for $\lambda \neq 0$. A lone $Z$ is rejected; admitted schedules commute with $\prod X$. |
+| Charge $Q$ | $\sum_i Z_i$ | Proved. Admitted Ising schedules commute with $\sum Z$. A transverse flip moves magnetization and is rejected. |
+| Spin flip | $\prod_i X_i$ | Proved for $\lambda \neq 0$. Admitted spin-flip schedules commute with $\prod X$. A lone $Z$ breaks it and is rejected. |
 | Momentum $P$ | Generator of the cyclic shift $T$ | Specified. Translation averaging is implemented classically for diagonal checks; block synthesis is not. |
 | Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. |
-
-
 
 <p align="center">
   <a href="docs/mercury-circuit-demo.mp4">
@@ -60,14 +58,16 @@ GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.git
 ```
 docs/SPECIFICATION.md     mathematical construction and PCSS workflow
 docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     remaining obligations (operator proof is closed)
-lean/CPSC/                Boolean certificate, operator proofs, emitted digest
-lean/Audit.lean           axiom audit (standard Lean axioms only)
+docs/OPEN_PROBLEMS.md     remaining obligations (operator proof closed)
+lean/CPSC/Operator.lean   closed operator commutation proof
+lean/CPSC/Lemmas.lean     bridge theorems (completeness, non-vacuous rejection)
+lean/Audit.lean           axiom audit (propext, Classical.choice, Quot.sound only)
+lean/CPSC/Emitted.lean    sample certificate carrying emitted_commutes
 qsharp/                   Ising and spin-flip Trotter operations
 src/cpsc/                 analyzer, compiler, certificate binder
 tests/                    adversarial rejection, orbit check, digest binding
-paper/PAPER.md            landing page for the paper
-paper/OPERATOR_PROOFS.md  Appendix A operator proof sketches
+paper/PAPER.md            paper landing page
+paper/OPERATOR_PROOFS.md  mathematical write-up of the Lean theorems
 ```
 
 ## Run the analyzer
@@ -83,7 +83,7 @@ Python 3.11+. No quantum hardware required. The demo is a statevector check on $
 
 ## Certificate story
 
-`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. The operator obligation is closed: `lean/CPSC/Operator.lean` proves that every admitted Trotter schedule commutes with the mode invariant (see also [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md) and `lean/Audit.lean`). The Python adversarial test rejects illegal gates at compile time. Emitted certificates carry `emitted_commutes`.
+The analyzer admits a schedule or rejects it. For every admitted schedule the Lean development proves the operator identity: the Trotter product of any length commutes with the mode invariant. See `lean/CPSC/Operator.lean` (`admitted_trotter_commutes`) and `lean/Audit.lean`. Rejection is not vacuous: with a nonzero rotation a transverse flip moves magnetization and a lone Z breaks $\prod X$. Emitted certificates carry the corresponding theorem (`emitted_commutes`).
 
 ## Relation to existing methods
 

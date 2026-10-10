@@ -7,7 +7,7 @@ SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 
 Ahmad Ali Parr · 10 October 2026
 
-**Read the paper: [PAPER.pdf](PAPER.pdf)** (source: [PAPER.tex](PAPER.tex)). Build with `latexmk -xelatex PAPER.tex`.
+**The paper is [PAPER.tex](PAPER.tex).** Build with `latexmk -xelatex PAPER.tex` (or lualatex). Informal sketches of the same proofs are in [OPERATOR_PROOFS.md](OPERATOR_PROOFS.md).
 
 ## Abstract
 
@@ -25,7 +25,7 @@ theorem admitted_trotter_commutes (mode : CPSC.Mode) (ι : R) (ang : Angles R)
 
 Rejection is not vacuous. When sin θ ≠ 0, a transverse rotation moves magnetization (`rx_not_comm_Mag`) and a lone Z rotation breaks ∏ X (`rz_not_comm_PiX`).
 
-Appendix A of the paper gives each proof in ordinary mathematics and names the Lean theorem that checks it. Appendix B maps the Lean files. Informal sketches are also in [OPERATOR_PROOFS.md](OPERATOR_PROOFS.md).
+Appendix A of PAPER.tex gives each proof in ordinary mathematics and names the Lean theorem that checks it. Appendix B maps the Lean files.
 
 ## Reproduce
 

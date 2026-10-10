@@ -10,7 +10,7 @@ Ahmad Ali Parr
 
 ## Abstract
 
-See [ABSTRACT.md](ABSTRACT.md). This note is the working paper for `cpsc-qft`. It describes what the code does. It does not claim a machine-checked proof of operator commutation, and it does not claim a continuum scattering amplitude.
+See [ABSTRACT.md](ABSTRACT.md). This note is the working paper for `cpsc-qft`. It describes what the code does. Operator commutation for every admitted Trotter schedule is proved (see [OPERATOR_PROOFS.md](OPERATOR_PROOFS.md) and the Lean development). It does not claim a continuum scattering amplitude.
 
 ## 1. Introduction
 
@@ -75,7 +75,7 @@ theorem emitted_admitted : allPreserve preservesMagnetization emittedGates = tru
 
 `lean/CPSC/Certificate.lean` defines the predicates and discharges them by reduction for the 4-site ring and for the two adversarial extensions. `rfl` fails if a forbidden constructor is inserted. `lean/CPSC/Emitted.lean` is a sample binding produced by the compiler; its digest is `e92f82910385ae3c46acc5479d57f4c6357cbbf9bf77d668e469a64b281db8e5`.
 
-This is a Boolean skeleton. It does not yet prove that the corresponding unitary commutes with Π_X as an operator. That obligation is stated and left open.
+Operator commutation is proved for every admitted schedule (see [OPERATOR_PROOFS.md](OPERATOR_PROOFS.md)). Each emitted certificate carries the corresponding theorem.
 
 ## 5. Q# emission
 
@@ -102,13 +102,17 @@ These checks do not include device noise. Ideal leakage zero does not survive de
 
 ## 7. What is not proved
 
-Operator commutation, a noise bound, a truncated-oscillator φ⁴ encoding, and a Lean checker wired into CI are open. Completeness holds inside each mode by construction of H: the Ising limit conserves magnetization, and the transverse-field model conserves Π_X. Projecting onto magnetization at λ ≠ 0 is refused, because that projection would drop part of the true evolution.
+A noise bound relating device error rates to sector leakage, a truncated-oscillator φ⁴ encoding (where the quartic is not an identity), instantiation of the ring-generic proof at Mathlib's complex numbers, and a Lean checker wired into CI remain open. Completeness holds inside each mode by construction of H: the Ising limit conserves magnetization, and the transverse-field model conserves Π_X. Projecting onto magnetization at λ ≠ 0 is refused, because that projection would drop part of the true evolution.
 
 The construction collides with symmetry-sector simulators and with verified circuit compilers. The piece that is specific here is the channel rule for this lattice shadow, the mode switch at λ = 0, and the digest bound to the admitted schedule.
 
 ## 8. Related work
 
 Block-diagonalization by a conserved charge is standard. Symmetry verification and post-selection are the method this compiler refuses to substitute for synthesis. Subspace-preserving evolution in existing quantum toolkits already builds a sector unitary once the symmetry is declared. Machine-checked circuit semantics exist in other stacks and do not know this Hamiltonian. Formalization of free bosonic quantum field theory in Lean (Douglas, Hoback, Mei, Nissim, 2026) is a different target: continuum Euclidean axioms, not a lattice scattering schedule.
+
+## Appendix
+
+The operator proofs are in [OPERATOR_PROOFS.md](OPERATOR_PROOFS.md).
 
 ## License
 

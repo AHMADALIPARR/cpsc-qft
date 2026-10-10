@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Boolean Lean skeleton run. Operator commutation sketches for every admitted schedule are in [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md). The paper is [paper/PAPER.md](paper/PAPER.md).
+**Status:** prototype. The analyzer, translation-orbit check, Trotter product, certificate digest, and Lean certificate run. Operator commutation on the qubit space is proved in Lean without axioms (`lean/CPSC/Operator.lean`). The paper is [paper/PAPER.md](paper/PAPER.md) (typeset source forthcoming as PAPER.tex / PAPER.pdf).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -59,12 +59,12 @@ GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.git
 ```
 docs/SPECIFICATION.md     mathematical construction and PCSS workflow
 docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     discharged skeleton vs remaining obligations
-lean/CPSC/                Boolean certificate, plus an emitted digest
+docs/OPEN_PROBLEMS.md     what is proved and what is still open
+lean/CPSC/                Boolean certificate, operator proofs, emitted digest
 qsharp/                   Ising and spin-flip Trotter operations
 src/cpsc/                 analyzer, compiler, certificate binder
 tests/                    adversarial rejection, orbit check, digest binding
-paper/PAPER.md            working paper
+paper/PAPER.md            landing page for the paper
 paper/OPERATOR_PROOFS.md  Appendix A operator proof sketches
 ```
 
@@ -81,7 +81,7 @@ Python 3.11+. No quantum hardware required. The demo is a statevector check on $
 
 ## Certificate story
 
-`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. Operator commutation for admitted schedules is proved in the sketches of [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md). The Python adversarial test rejects illegal gates at compile time.
+`lean/CPSC/Certificate.lean` defines the Boolean admission predicates. Operator commutation for every admitted Trotter schedule is proved in `lean/CPSC/Operator.lean` (see also [paper/OPERATOR_PROOFS.md](paper/OPERATOR_PROOFS.md)). The Python adversarial test rejects illegal gates at compile time. `lake env lean Audit.lean` lists only Lean's standard axioms.
 
 ## Relation to existing methods
 

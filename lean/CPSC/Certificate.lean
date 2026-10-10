@@ -13,8 +13,8 @@ SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 /-!
 Boolean certificate layer.
 
-These lemmas are proved. They do not mention operators. The operator axioms
-live in `CPSC.Axioms`, and the bridge lemmas in `CPSC.Lemmas`.
+These lemmas are proved. They do not mention operators. The operator model
+lives in `CPSC.Operator`, and the bridge lemmas in `CPSC.Lemmas`.
 -/
 
 namespace CPSC

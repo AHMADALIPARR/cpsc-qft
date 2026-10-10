@@ -7,17 +7,18 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 # Open problems
 
-Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype with a Boolean certificate. Operator commutation is not formally verified, and prior art is not cleared.
+Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype with a Boolean certificate and documented operator proof sketches. Prior art is not cleared.
 
 ## Discharged in the prototype
 
 1. Boolean admission. `lean/CPSC/Certificate.lean` reduces the 4-site ring and both adversarial extensions by `rfl`.
 2. Digest binding. `cpsc.certificate` hashes the schedule. Editing a gate makes `Certificate.matches` false.
 3. Mode switch. λ = 0 rejects a single X. λ ≠ 0 rejects a lone Z. Translation orbits must be closed.
+4. Operator proof sketches. Appendix A (every admitted Trotter schedule conserves the mode invariant on every lattice size) is extracted in [paper/OPERATOR_PROOFS.md](../paper/OPERATOR_PROOFS.md).
 
 ## Obligations not discharged
 
-1. Operator commutation. The Boolean predicate is not yet proved equal to `[U, Π] = 0` on `(ℂ²)⊗N`.
+1. Full Lean operator model without project axioms. The current `Axioms.lean` still axiomatizes commutation; the sketches in OPERATOR_PROOFS.md are the target for `Operator.lean`.
 2. Leakage under hardware noise. Ideal leakage on N = 4 is zero; device leakage is unmodeled.
 3. Momentum as an eigenspace, rather than orbit closure of the gate support.
 4. A non-trivial φ⁴ encoding. `X^4 = I` on qubits. The next model is a truncated oscillator per site.
@@ -32,4 +33,4 @@ Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype
 
 ## What would make the novelty claim true
 
-A released artifact where (i) the channel projector is derived from a stated lattice QFT, (ii) every hardware rewrite is rejected or proved inside the commutant, and (iii) a Lean checker fails closed on an edited circuit. The prototype now rejects illegal gates and binds a digest. It still does not fail a Lean checker on an edited operator identity. That gap is obligation 1.
+A released artifact where (i) the channel projector is derived from a stated lattice QFT, (ii) every hardware rewrite is rejected or proved inside the commutant, and (iii) a Lean checker fails closed on an edited circuit. The prototype now rejects illegal gates, binds a digest, and documents the operator proofs. Integrating the sketches into a axiom-free Lean development closes the remaining gap on obligation 1.

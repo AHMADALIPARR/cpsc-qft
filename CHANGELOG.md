@@ -5,6 +5,12 @@ SPDX-License-Identifier: LicenseRef-CPSC-ESCL-1.0 OR AGPL-3.0-only
 
 # Changelog
 
+## 0.3.1 — 2026-10-12
+
+- Align Python Ising analyzer with Lean: reject `parity_even` / `rx_pair` because it changes magnetization. Certificates now match.
+- Add GitHub Actions workflow that runs `lake build` on the Lean development.
+- Update open-problems list.
+
 ## 0.3.0 — 2026-10-07
 
 Production release of the research prototype.

@@ -24,10 +24,17 @@ def test_forbidden_bit_flip_rejected_at_compile_time():
     assert "parity" in rejected[0].reason
 
 
-def test_legal_circuit_admitted():
-    analyzer = SymmetryAnalyzer(4, conserve_magnetization=True)
-    gates = analyzer.admit([zz(0, 1), zz(2, 3), rx_pair(1, 2)])
-    assert len(gates) == 3
+def test_ising_rejects_parity_even_pair():
+    analyzer = SymmetryAnalyzer(4)
+    rejected = analyzer.check([zz(0, 1), rx_pair(1, 2)])
+    assert len(rejected) == 1
+    assert "magnetization" in rejected[0].reason
+
+
+def test_spin_flip_admits_parity_even_pair():
+    analyzer = SymmetryAnalyzer(4, mode="spin_flip")
+    gates = analyzer.admit([zz(0, 1), rx_pair(1, 2)])
+    assert len(gates) == 2
 
 
 def test_admit_raises_on_adversarial_edit():

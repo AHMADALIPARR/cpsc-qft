@@ -15,6 +15,7 @@ Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype
 2. Digest binding. `cpsc.certificate` hashes the schedule. Editing a gate makes `Certificate.matches` false.
 3. Mode switch. λ = 0 rejects a single X. λ ≠ 0 rejects a lone Z. Translation orbits must be closed.
 4. Operator commutation. `lean/CPSC/Operator.lean` proves that every admitted Trotter schedule commutes with `∑ Z` or `∏ X` on `(R²)⊗N`, for any commutative ring `R`, lattice size, and angles. No project axioms; see `lean/Audit.lean`.
+5. Python/Lean agreement on `rx_pair`. Ising mode now rejects parity-even pairs (which change magnetization), matching `preservesMagnetization`. Spin-flip mode continues to admit them.
 
 ## Obligations not discharged
 
@@ -22,8 +23,7 @@ Marked `POSSIBLY_NOVEL` in the draft. The honest status is: executable prototype
 2. Leakage under hardware noise. Ideal leakage on N = 4 is zero; device leakage is unmodeled.
 3. Momentum as an eigenspace, rather than orbit closure of the gate support.
 4. A non-trivial φ⁴ encoding. `X^4 = I` on qubits. The next model is a truncated oscillator per site.
-5. A Lean binary in CI. `lake build` passes locally on Lean 4.22.0; no CI workflow runs it yet.
-6. Python and Lean disagree on `rx_pair` in Ising mode. `SymmetryAnalyzer` admits `parity_even` at λ = 0 (see `test_legal_circuit_admitted`), while `preservesMagnetization (.parityEvenPair _ _)` is false, because X_a X_b changes magnetization. At λ = 0 the pair evolves with angle 0, so the state is unaffected, but a certificate emitted for such a schedule fails `emitted_admitted`. One of the two rules should change.
+5. A Lean binary in CI. `lake build` passes locally on Lean 4.22.0; a workflow now runs it (see `.github/workflows/lean.yml`).
 
 ## Collisions
 

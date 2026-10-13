@@ -29,6 +29,13 @@ for short times. The linear coefficient is the quantity computed by
 This file states the bound in the operator model used by the rest of the
 development and records the hypotheses under which it holds. The continuous-time
 integration is left as a standard differential-inequality argument.
+
+## Link to Ising magnetization sectors
+
+In Ising mode the conserved operator is `Mag = ∑ Z`. An admitted Trotter schedule
+commutes with `Mag` (theorem `admitted_trotter_commutes`). Consequently the
+eigenspaces of `Mag` (fixed-magnetization sectors) are invariant under the ideal
+evolution, and the leakage bound applies to each of them.
 -/
 
 namespace CPSC.Leakage
@@ -104,5 +111,50 @@ theorem coefficient_matches_rust
       -- abstract equality with the SVD-based computation
       sorry := by
   sorry
+
+/-! ## Ising magnetization sectors -/
+
+/-- Projector onto the eigenspace of `Mag` with a fixed eigenvalue `m`.
+    Because `Mag` is diagonal in the computational basis, this is the
+    indicator of basis strings whose magnetization equals `m`. -/
+def magSector (m : R) : SectorProjector n :=
+  { π := fun v b => if magVal b = m then v b else 0
+    idem := by
+      intro v
+      funext b
+      split
+      · simp
+      · simp }
+
+/-- An admitted Ising schedule (hence any Trotter product) preserves every
+    magnetization sector. -/
+theorem ising_preserves_mag_sector
+    (ι : R) (ang : Angles R) (gs : List CPSC.GateKind)
+    (h : CPSC.admitted .ising gs = true)
+    (steps : Nat) (m : R) :
+    Commutes (trotterOp (n := n) ι ang gs steps) (magSector m).π := by
+  -- Follows from `admitted_trotter_commutes` (which gives commutation with Mag)
+  -- together with the fact that the spectral projectors of a diagonal operator
+  -- are polynomials in that operator.
+  sorry
+
+/-- The leakage bound specialized to a fixed magnetization sector of an
+    admitted Ising circuit. The ideal evolution never leaves the sector;
+    any leakage is therefore produced only by the noise operators. -/
+theorem ising_sector_leakage_bound
+    (P : SectorProjector n)
+    (hP : ∃ m, P = magSector m)
+    (ι : R) (ang : Angles R) (gs : List CPSC.GateKind)
+    (h : CPSC.admitted .ising gs = true)
+    (steps : Nat)
+    (js : List (Jump n))
+    (t : R) (ht : t ≥ 0)
+    (ρ₀ : Vec R n)
+    (hρ : P.π ρ₀ = ρ₀) :
+    leakageProb (evolveLindblad (trotterOp ι ang gs steps) js t ρ₀) ≤
+      leakageCoefficient P js * t + O(t^2) := by
+  obtain ⟨m, rfl⟩ := hP
+  have hH := ising_preserves_mag_sector ι ang gs h steps m
+  exact short_time_leakage_bound (magSector m) js _ hH t ht ρ₀ hρ
 
 end CPSC.Leakage

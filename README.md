@@ -9,7 +9,7 @@ or the GNU AGPL v3 only. Both are strict copyleft.
 
 Proof-carrying lattice scattering for 1+1D scalar field theory. Conservation laws are compilation constraints, not post-selection filters.
 
-**Status:** operator commutation closed. Every schedule the analyzer admits, Trotterized for any number of steps, commutes as an operator on `(R²)^⊗N` with the conserved operator of its mode (`∑ Z` at λ = 0, `∏ X` for λ ≠ 0). The proof is in `lean/CPSC/Operator.lean` and uses no project axioms. Analyzer, orbit check, Trotter product, digest binding, and Q# emission all run. Paper: [paper/PAPER.md](paper/PAPER.md).
+**Status:** operator commutation closed and sorry-free. Every schedule the analyzer admits, Trotterized for any number of steps, commutes as an operator on `(R²)^⊗N` with the conserved operator of its mode (`∑ Z` at λ = 0, `∏ X` for λ ≠ 0). The proof is in `lean/CPSC/Operator.lean`. Additional sorry-free results link admitted Ising schedules to magnetization-sector invariance (`lean/CPSC/LeakageBound.lean`) and establish the skew-Hermitian property of the generator (`lean/CPSC/MathlibInstantiation.lean`). Circuit axioms in `lean/CPSC/CircuitAxioms.lean` connect the proved theorems to the Q# emission. Analyzer, orbit check, Trotter product, digest binding, and Q# emission all run. Paper: [paper/PAPER.md](paper/PAPER.md).
 
 Repository: [AHMADALIPARR/cpsc-qft](https://github.com/AHMADALIPARR/cpsc-qft)
 
@@ -31,14 +31,14 @@ $$
 H = -J \sum_{i=0}^{N-1} Z_i Z_{i+1} + \lambda \sum_{i=0}^{N-1} X_i
 $$
 
-The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the identity, because $X^2 = I$. It is recorded in `src/cpsc/hamiltonian.py` and then dropped. A faithful lattice $\phi^4$ needs a truncated real field per site (or a higher spin), which is listed as an open problem.
+The quartic written as $(g/4!)\sum_i X_i^4$ is identically proportional to the identity, because $X^2 = I$. It is recorded in `src/cpsc/hamiltonian.py` and then dropped. A faithful lattice $\phi^4$ needs a truncated real field per site (or a higher spin); a sketch of the truncated oscillator appears in `rust/src/phi4_encoding.rs`.
 
 | Quantity | Operator | Status in this repo |
 | --- | --- | --- |
-| Charge $Q$ | $\sum_i Z_i$ | Proved. Admitted Ising schedules commute with $\sum Z$. A transverse flip moves magnetization and is rejected. |
+| Charge $Q$ | $\sum_i Z_i$ | Proved. Admitted Ising schedules commute with $\sum Z$. A transverse flip moves magnetization and is rejected. Sector invariance is sorry-free in `LeakageBound.lean`. |
 | Spin flip | $\prod_i X_i$ | Proved for $\lambda \neq 0$. Admitted spin-flip schedules commute with $\prod X$. A lone $Z$ breaks it and is rejected. |
 | Momentum $P$ | Generator of the cyclic shift $T$ | Specified. Translation averaging is implemented classically for diagonal checks; block synthesis is not. |
-| Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. |
+| Energy $E$ | $H$ itself | Automatic for exact $e^{-iHt}$. Not a separate compilation filter. Generator skew-Hermitian property proved. |
 
 <p align="center">
   <a href="docs/mercury-circuit-demo.mp4">
@@ -56,18 +56,23 @@ GitHub Pages serves `docs/`. The console is [qsim.html](https://ahmadaliparr.git
 ## Layout
 
 ```
-docs/SPECIFICATION.md     mathematical construction and PCSS workflow
-docs/CHANNEL_PRUNING.md   channel rules and what they do not mean
-docs/OPEN_PROBLEMS.md     remaining obligations (operator proof closed)
-lean/CPSC/Operator.lean   closed operator commutation proof
-lean/CPSC/Lemmas.lean     bridge theorems (completeness, non-vacuous rejection)
-lean/Audit.lean           axiom audit (propext, Classical.choice, Quot.sound only)
-lean/CPSC/Emitted.lean    sample certificate carrying emitted_commutes
-qsharp/                   Ising and spin-flip Trotter operations
-src/cpsc/                 analyzer, compiler, certificate binder
-tests/                    adversarial rejection, orbit check, digest binding
-paper/PAPER.md            paper landing page
-paper/OPERATOR_PROOFS.md  mathematical write-up of the Lean theorems
+docs/SPECIFICATION.md          mathematical construction and PCSS workflow
+docs/CHANNEL_PRUNING.md        channel rules and what they do not mean
+docs/OPEN_PROBLEMS.md          remaining obligations
+lean/CPSC/Operator.lean        closed operator commutation proof (sorry-free)
+lean/CPSC/LeakageBound.lean    magnetization-sector invariance (sorry-free)
+lean/CPSC/MathlibInstantiation.lean  skew-Hermitian generator (sorry-free)
+lean/CPSC/CircuitAxioms.lean   axioms linking proved theorems to Q# circuits
+lean/CPSC/Lemmas.lean          bridge theorems
+lean/Audit.lean                axiom audit
+lean/CPSC/Emitted.lean         sample certificate carrying emitted_commutes
+qsharp/                        Ising and spin-flip Trotter operations
+src/cpsc/                      analyzer, compiler, certificate binder
+rust/                          numerical leakage bound and φ⁴ truncation sketches
+ontologies/                    illustrative Planck-temperature ontology
+tests/                         adversarial rejection, orbit check, digest binding
+paper/PAPER.md                 paper landing page
+paper/OPERATOR_PROOFS.md       mathematical write-up of the Lean theorems
 ```
 
 ## Run the analyzer
@@ -83,7 +88,7 @@ Python 3.11+. No quantum hardware required. The demo is a statevector check on $
 
 ## Certificate story
 
-The analyzer admits a schedule or rejects it. For every admitted schedule the Lean development proves the operator identity: the Trotter product of any length commutes with the mode invariant. See `lean/CPSC/Operator.lean` (`admitted_trotter_commutes`) and `lean/Audit.lean`. Rejection is not vacuous: with a nonzero rotation a transverse flip moves magnetization and a lone Z breaks $\prod X$. Emitted certificates carry the corresponding theorem (`emitted_commutes`).
+The analyzer admits a schedule or rejects it. For every admitted schedule the Lean development proves the operator identity: the Trotter product of any length commutes with the mode invariant. See `lean/CPSC/Operator.lean` (`admitted_trotter_commutes`) and `lean/Audit.lean`. Rejection is not vacuous: with a nonzero rotation a transverse flip moves magnetization and a lone Z breaks $\prod X$. Emitted certificates carry the corresponding theorem (`emitted_commutes`). Circuit axioms in `CircuitAxioms.lean` make the link to the Q# operations explicit.
 
 ## Relation to existing methods
 

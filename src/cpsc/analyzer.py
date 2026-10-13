@@ -16,9 +16,10 @@
 A gate is admitted only if it preserves the active invariant. This is a
 rejection rule, not a post-selection filter.
 
-Ising mode (lambda = 0) conserves magnetization and Z-parity. A single X is
-forbidden. Spin-flip mode (lambda != 0) conserves prod X, the actual symmetry
-of the transverse-field Ising model. A single Z is forbidden; a single X is not.
+Ising mode (lambda = 0) conserves magnetization. A single X or an even X pair
+is forbidden, because both change the magnetization eigenvalue. Spin-flip mode
+(lambda != 0) conserves prod X, the actual symmetry of the transverse-field
+Ising model. A single Z is forbidden; a single X or even X pair is not.
 """
 
 from __future__ import annotations
@@ -85,7 +86,9 @@ class SymmetryAnalyzer:
         if self.mode is SymmetryMode.ISING:
             if gate.kind in {"illegal", "transverse"}:
                 return "odd X/Y support changes Z-parity; forbidden sector"
-            if gate.kind in {"parity_even", "magnetization", "phase"}:
+            if gate.kind == "parity_even":
+                return "even X pair changes magnetization; forbidden Ising sector"
+            if gate.kind in {"magnetization", "phase"}:
                 return None
         else:
             if gate.kind == "phase":

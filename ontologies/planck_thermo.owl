@@ -1,0 +1,35 @@
+@prefix : <http://example.org/planck_thermo#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix swrl: <http://www.w3.org/2003/11/swrl#> .
+@prefix swrlb: <http://www.w3.org/2003/11/swrlb#> .
+
+:ThermodynamicState a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :hasTemperature ; owl:someValuesFrom xsd:double ] .
+
+:QuantumRegime a owl:Class ;
+    rdfs:subClassOf :ThermodynamicState ,
+        [ a owl:Restriction ; owl:onProperty :hasWavelength ; owl:someValuesFrom xsd:double ] .
+
+:BlackHoleRegime a owl:Class ;
+    rdfs:subClassOf :ThermodynamicState ,
+        [ a owl:Restriction ; owl:onProperty :hasSchwarzschildRadius ; owl:someValuesFrom xsd:double ] .
+
+:hasTemperature a owl:DatatypeProperty ; rdfs:domain :ThermodynamicState ; rdfs:range xsd:double .
+:hasEnergy a owl:DatatypeProperty ; rdfs:domain :ThermodynamicState ; rdfs:range xsd:double .
+:hasWavelength a owl:DatatypeProperty ; rdfs:domain :QuantumRegime ; rdfs:range xsd:double .
+:hasSchwarzschildRadius a owl:DatatypeProperty ; rdfs:domain :BlackHoleRegime ; rdfs:range xsd:double .
+
+:k_B a owl:NamedIndividual ; :hasValue "1.380649e-23"^^xsd:double .
+:hbar a owl:NamedIndividual ; :hasValue "1.054571817e-34"^^xsd:double .
+:c a owl:NamedIndividual ; :hasValue "299792458"^^xsd:double .
+:G a owl:NamedIndividual ; :hasValue "6.67430e-11"^^xsd:double .
+
+:CollapseCondition a owl:Class .
+
+[ a owl:AllDisjointClasses ; owl:members ( :ThermodynamicState :CollapseCondition ) ] .
+
+# Full SWRL arithmetic rules for E = k_B T, r_s = 2 G E / c^4, λ = h c / E
+# and the collapse condition λ ≤ r_s are left as a sketch for a DL reasoner with SWRL support.
